@@ -1,64 +1,72 @@
 import requests
 import json
-import schedule
-import time
 import re
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 
-channel_id = "1084908479745114212"
-url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
-url_get_message = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1"
+id_canal = "1084908479745114212"
+url_envoi_message = f"https://discord.com/api/v9/channels/{id_canal}/messages"
+url_recup_message = f"https://discord.com/api/v9/channels/{id_canal}/messages?limit=1"
 
-headers = {
+entetes = {
     "accept": "*/*",
     "accept-language": "fr,fr-CH;q=0.9",
     "content-type": "application/json",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9181 Chrome/128.0.6613.186 Electron/32.2.7 Safari/537.36"
 }
 
-data = {
+donnees = {
     "content": "$p",  
     "tts": False
 }
 
-def send_message():
-    response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
+def envoyer_message():
+    reponse_envoi = requests.post(url_envoi_message, headers=entetes, data=json.dumps(donnees))
 
-    if response_send.status_code == 200:
+    if reponse_envoi.status_code == 200:
         print("Message envoyé avec succès !")
-        response_get = requests.get(url_get_message, headers=headers)
-        if response_get.status_code == 200:
-            last_message = response_get.json()[0]
+
+        reponse_recup = requests.get(url_recup_message, headers=entetes)
+        
+        if reponse_recup.status_code == 200:
+            dernier_message = reponse_recup.json()[0]
             print("--------------------")
-            print(f"Content: {last_message['content']}")
-            sender_id = last_message['author']['id']
-            print(f"Envoyeur : {sender_id}")
-            if sender_id == "432610292342587392":
-                match = re.search(r"(\d+) min", last_message['content'])
-                if match:
-                    time_left = int(match.group(1))
-                    print(f"Temps restant avant le prochain message: {time_left} minutes")
-                    time.sleep(time_left * 60)
-                    send_message()  
+            print(f"Contenu: {dernier_message['content']}")
+            id_envoyeur = dernier_message['author']['id']
+            print(f"Envoyeur : {id_envoyeur}")
+            
+            if id_envoyeur == "432610292342587392":
+                correspondance = re.search(r"(\d+) min", dernier_message['content'].replace("**", ""))
+                if correspondance:
+                    temps_restant = int(correspondance.group(1))
+                    print(f"Temps restant avant le prochain message: {temps_restant} minutes")
+                    attendre_temps_restant(temps_restant)
+                else:
+                    print("Temps restant non trouvé dans le message.")
             else:
-                print("L'envoyeur n'est pas correct. Démarrage de la planification.")
-                start_scheduled_messages()
-
+                print(f"L'envoyeur n'est pas correct (ID: {id_envoyeur}).")
         else:
-            print(f"Erreur lors de la récupération du message : {response_get.status_code}")
+            print(f"Erreur lors de la récupération du message : {reponse_recup.status_code}")
     else:
-        print(f"Erreur lors de l'envoi du message : {response_send.status_code}")
-        print(response_send.text)
+        print(f"Erreur lors de l'envoi du message : {reponse_envoi.status_code}")
+        print(reponse_envoi.text)
 
-def heure_impaire():
-    current_hour = datetime.now().hour
-    return current_hour % 2 != 0
+def attendre_temps_restant(temps_restant):
+    print(f"Attente pendant {temps_restant} minutes...")
+    time.sleep(temps_restant * 60)
+    print("Temps écoulé, envoi du message.")
+    envoyer_message()
 
-def start_scheduled_messages():
-    schedule.every(2).hours.do(send_message)
-    schedule.every().hour.at(":00").do(lambda: send_message() if heure_impaire() else None)
+def envoyer_messages_reguliers():
     while True:
-        schedule.run_pending()
-        time.sleep(60)  
+        heure_actuelle = datetime.now()
 
-send_message()
+        if heure_actuelle.hour % 2 == 1 or heure_actuelle.minute == 0:
+            envoyer_message()
+        
+        temps_attente = (60 - heure_actuelle.minute) * 60
+        print(f"Attente jusqu'à la prochaine heure ({temps_attente} secondes)...")
+        time.sleep(temps_attente)
+
+envoyer_message()
+envoyer_messages_reguliers()
