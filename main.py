@@ -24,7 +24,8 @@ def envoyer_message():
     reponse_envoi = requests.post(url_envoi_message, headers=entetes, data=json.dumps(donnees))
 
     if reponse_envoi.status_code == 200:
-        print("Message envoyé avec succès !")
+        print("\033[92m[SUCCESS] Message envoyé avec succès !\033[0m")
+
 
         reponse_recup = requests.get(url_recup_message, headers=entetes)
         
@@ -42,13 +43,13 @@ def envoyer_message():
                     print(f"Temps restant avant le prochain message: {temps_restant} minutes")
                     attendre_temps_restant(temps_restant)
                 else:
-                    print("Temps restant non trouvé dans le message.")
+                    print("Je trouve pas le bon temps zbi")
             else:
-                print(f"L'envoyeur n'est pas correct (ID: {id_envoyeur}).")
+                print(f"Qlq d'autres à écrit?")
         else:
-            print(f"Erreur lors de la récupération du message : {reponse_recup.status_code}")
+            print(f"\033[91mERROR : {reponse_recup.status_code}\033[0m")
     else:
-        print(f"Erreur lors de l'envoi du message : {reponse_envoi.status_code}")
+        print(f"\033[91mERROR : {reponse_recup.status_code}\033[0m")
         print(reponse_envoi.text)
 
 def attendre_temps_restant(temps_restant):
