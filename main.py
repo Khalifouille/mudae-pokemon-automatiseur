@@ -2,6 +2,7 @@ import requests
 import json
 import schedule
 import time
+import re
 from datetime import datetime
 
 channel_id = "1084908479745114212"
@@ -32,6 +33,17 @@ def send_message():
             print(f"Content: {last_message['content']}")
             sender_id = last_message['author']['id']
             print(f"Envoyeur : {sender_id}")
+            if sender_id == "432610292342587392":
+                match = re.search(r"(\d+) min", last_message['content'])
+                if match:
+                    time_left = int(match.group(1))
+                    print(f"Temps restant avant le prochain message: {time_left} minutes")
+                    time.sleep(time_left * 60)
+                    send_message()  
+            else:
+                print("L'envoyeur n'est pas correct. Démarrage de la planification.")
+                start_scheduled_messages()
+
         else:
             print(f"Erreur lors de la récupération du message : {response_get.status_code}")
     else:
@@ -42,10 +54,11 @@ def heure_impaire():
     current_hour = datetime.now().hour
     return current_hour % 2 != 0
 
-schedule.every(2).hours.do(send_message)
+def start_scheduled_messages():
+    schedule.every(2).hours.do(send_message)
+    schedule.every().hour.at(":00").do(lambda: send_message() if heure_impaire() else None)
+    while True:
+        schedule.run_pending()
+        time.sleep(60)  
 
-schedule.every().hour.at(":00").do(lambda: send_message() if heure_impaire() else None)
-
-while True:
-    schedule.run_pending()
-    time.sleep(60)  
+send_message()
