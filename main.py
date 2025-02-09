@@ -27,9 +27,10 @@ if response_send.status_code == 200:
     
     if response_get.status_code == 200:
         last_message = response_get.json()[0]  
-        print("Dernier message envoyé :")
+        print("--------------------")
         print(f"Content: {last_message['content']}")
-        print(f"ID du message: {last_message['id']}")
+        sender_id = last_message['author']['id']
+        print(f"Envoyeur : {sender_id}")
     else:
         print(f"Erreur lors de la récupération du message : {response_get.status_code}")
 else:
