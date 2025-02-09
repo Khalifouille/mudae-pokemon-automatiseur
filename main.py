@@ -1,5 +1,8 @@
 import requests
 import json
+import schedule
+import time
+from datetime import datetime
 
 channel_id = "1084908479745114212"
 url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
@@ -17,22 +20,32 @@ data = {
     "tts": False
 }
 
+def send_message():
+    response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
 
-response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
-
-if response_send.status_code == 200:
-    print("Message envoyé avec succès !")
-
-    response_get = requests.get(url_get_message, headers=headers)
-    
-    if response_get.status_code == 200:
-        last_message = response_get.json()[0]  
-        print("--------------------")
-        print(f"Content: {last_message['content']}")
-        sender_id = last_message['author']['id']
-        print(f"Envoyeur : {sender_id}")
+    if response_send.status_code == 200:
+        print("Message envoyé avec succès !")
+        response_get = requests.get(url_get_message, headers=headers)
+        if response_get.status_code == 200:
+            last_message = response_get.json()[0]
+            print("--------------------")
+            print(f"Content: {last_message['content']}")
+            sender_id = last_message['author']['id']
+            print(f"Envoyeur : {sender_id}")
+        else:
+            print(f"Erreur lors de la récupération du message : {response_get.status_code}")
     else:
-        print(f"Erreur lors de la récupération du message : {response_get.status_code}")
-else:
-    print(f"Erreur lors de l'envoi du message : {response_send.status_code}")
-    print(response_send.text)
+        print(f"Erreur lors de l'envoi du message : {response_send.status_code}")
+        print(response_send.text)
+
+def heure_impaire():
+    current_hour = datetime.now().hour
+    return current_hour % 2 != 0
+
+schedule.every(2).hours.do(send_message)
+
+schedule.every().hour.at(":00").do(lambda: send_message() if heure_impaire() else None)
+
+while True:
+    schedule.run_pending()
+    time.sleep(60)  
