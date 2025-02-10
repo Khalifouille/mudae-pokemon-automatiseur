@@ -2,67 +2,61 @@ import requests
 import json
 import re
 import time
-import sys
+import threading
+import tkinter as tk
+from tkinter import messagebox
 
-channel_id = "1084908479745114212"
-url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
-url_get_message = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1"
-
-headers = {
-    "accept": "*/*",
-    "content-type": "application/json",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-}
-
-data = {
-    "content": "$p",
-    "tts": False
-}
+running = False
 
 def envoyer_message():
+    global running
+    headers = {
+        "accept": "*/*",
+        "authorization": token_entry.get(),
+        "content-type": "application/json",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
+    channel_id = channel_entry.get()
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
+    url_get_message = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1"
+
+    data = {"content": "$p", "tts": False}
+
     response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
 
     if response_send.status_code == 200:
-        print("\033[92m[SUCCESS] Message envoyé avec succès !\033[0m")
+        log_message("[SUCCESS] Message envoyé avec succès !")
         time.sleep(2)
-        analyser_reponse()
+        analyser_reponse(headers, url_get_message)
     else:
-        print(f"\033[91m[ERROR] {response_send.status_code}\033[0m")
-        print(response_send.text)
+        log_message(f"[ERROR] {response_send.status_code}\n{response_send.text}")
 
-def obtenir_dernier_message():
+def obtenir_dernier_message(headers, url_get_message):
     response_get = requests.get(url_get_message, headers=headers)
 
     if response_get.status_code == 200:
         last_message = response_get.json()[0]
-        contenu = last_message['content']
-        sender_id = last_message['author']['id']
-        return contenu, sender_id
+        return last_message['content'], last_message['author']['id']
     else:
-        print(f"\033[91m[ERROR] {response_get.status_code}\033[0m")
+        log_message(f"[ERROR] {response_get.status_code}")
         return None, None
 
-def analyser_reponse():
-    contenu, sender_id = obtenir_dernier_message()
+def analyser_reponse(headers, url_get_message):
+    global running
+    contenu, sender_id = obtenir_dernier_message(headers, url_get_message)
 
     if not contenu or not sender_id:
-        print("\033[91m[ERROR] Impossible de récupérer le dernier message.\033[0m")
+        log_message("[ERROR] Impossible de récupérer le dernier message.")
         return
 
-    print("--------------------")
-    print(f"Contenu: {contenu}")
-    print(f"Envoyeur : {sender_id}")
-
-    if sender_id == "432610292342587392": 
+    if sender_id == "432610292342587392":
         if "Temps restant avant votre prochain $p" in contenu:
             temps_attente = extraire_temps(contenu)
-            print(f"Temps restant avant le prochain message: {temps_attente} minutes")
+            log_message(f"Temps d'attente : {temps_attente} minutes")
             afficher_compte_a_rebours(temps_attente)
         else:
-            print("\033[94m[INFO] Pokémon roll détecté, lancement du cycle de 2h.\033[0m")
+            log_message("[INFO] Pokémon roll détecté, lancement du cycle de 2h.")
             afficher_compte_a_rebours(120)
-    else:
-        print(f"\033[91m[ERROR] L'envoyeur n'est pas correct (ID: {sender_id}).\033[0m")
 
 def extraire_temps(message):
     match = re.search(r"(\d+)h(?: (\d+) min)?", message.replace("**", ""))
@@ -77,16 +71,55 @@ def extraire_temps(message):
     return 0
 
 def afficher_compte_a_rebours(minutes):
-    while minutes > 0:
-        sys.stdout.write(f"\r\033[92m[INFO] Temps restant : {minutes} min\033[0m")
-        sys.stdout.flush()
+    global running
+    while minutes > 0 and running:
+        countdown_label.config(text=f"Temps restant : {minutes} min")
+        root.update()
         time.sleep(60)
         minutes -= 1
-    print("\n\033[92m[INFO] Temps écoulé, envoi du message.\033[0m")
-    envoyer_message()
+    if running:
+        log_message("[INFO] Temps écoulé, envoi du message.")
+        envoyer_message()
+
+def log_message(message):
+    log_text.insert(tk.END, message + "\n")
+    log_text.see(tk.END)
 
 def demarrer_bot():
-    print("[INFO] Envoi de $p pour vérifier le dernier message de Mudae...")
-    envoyer_message()
+    global running
+    if not token_entry.get() or not channel_entry.get():
+        messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
+        return
+    running = True
+    threading.Thread(target=envoyer_message, daemon=True).start()
 
-demarrer_bot()
+def arreter_bot():
+    global running
+    running = False
+    log_message("[INFO] Bot arrêté.")
+
+root = tk.Tk()
+root.title("Discord Pokémon Bot")
+root.geometry("400x400")
+
+tk.Label(root, text="Token Discord :").pack()
+token_entry = tk.Entry(root, width=50, show="*")
+token_entry.pack()
+
+tk.Label(root, text="Channel ID :").pack()
+channel_entry = tk.Entry(root, width=50)
+channel_entry.pack()
+
+start_button = tk.Button(root, text="Démarrer", command=demarrer_bot, bg="green", fg="white")
+start_button.pack(pady=5)
+
+stop_button = tk.Button(root, text="Arrêter", command=arreter_bot, bg="red", fg="white")
+stop_button.pack(pady=5)
+
+countdown_label = tk.Label(root, text="Temps restant : -")
+countdown_label.pack()
+
+log_text = tk.Text(root, height=10, width=50)
+log_text.pack()
+
+root.mainloop()
