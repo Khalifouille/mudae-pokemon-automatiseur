@@ -28,6 +28,8 @@ def envoyer_message():
         print("\033[92m[SUCCESS] Message envoyé avec succès !\033[0m")
 
         response_get = requests.get(url_get_message, headers=headers)
+
+        time.sleep(1)
         
         if response_get.status_code == 200:
             last_message = response_get.json()[0]
@@ -71,8 +73,7 @@ def afficher_compte_a_rebours(minutes):
         sys.stdout.flush()
         time.sleep(60)
         minutes -= 1
-    print("\n\033[92m[INFO] Temps écoulé, envoi du message.\033[0m")
-    envoyer_message()
+    print("\n\033[92m[INFO] Temps écoulé.\033[0m")
 
 def boucle_principale():
     while True:
@@ -83,5 +84,6 @@ def boucle_principale():
 
         print("Attente de 2 heures avant le prochain message...")
         afficher_compte_a_rebours(120)
+        envoyer_message()  
 
 envoyer_message()
