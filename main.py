@@ -13,37 +13,47 @@ headers = {
     "accept": "*/*",
     "accept-language": "fr,fr-CH;q=0.9",
     "content-type": "application/json",
-    "user-agent": "Mozilla/5.0"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 }
 
-data = {"content": "$p", "tts": False}
+data = {
+    "content": "$p",
+    "tts": False
+}
 
 def envoyer_message():
     response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
     
     if response_send.status_code == 200:
         print("\033[92m[SUCCESS] Message envoyé avec succès !\033[0m")
+        time.sleep(2)
+        analyser_reponse()
     else:
         print(f"\033[91m[ERROR] {response_send.status_code}\033[0m")
-        return
-    
+        print(response_send.text)
+
+def analyser_reponse():
     response_get = requests.get(url_get_message, headers=headers)
-    time.sleep(1)
     
     if response_get.status_code == 200:
         last_message = response_get.json()[0]
-        print("--------------------")
-        print(f"Contenu: {last_message['content']}")
+        contenu = last_message['content']
         sender_id = last_message['author']['id']
+        print("--------------------")
+        print(f"Contenu: {contenu}")
         print(f"Envoyeur : {sender_id}")
         
         if sender_id == "432610292342587392":
-            temps_attente = extraire_temps(last_message['content'])
-            print(f"Temps restant avant le prochain message: {temps_attente} minutes")
-            if temps_attente > 0:
+            if "Temps restant avant votre prochain $p" in contenu:
+                temps_attente = extraire_temps(contenu)
+                print(f"Temps restant avant le prochain message: {temps_attente} minutes")
                 afficher_compte_a_rebours(temps_attente)
+            else:
+                print("\033[94m[INFO] Pokémon roll détecté, aucune attente requise.\033[0m")
         else:
             print(f"\033[91m[ERROR] L'envoyeur n'est pas correct (ID: {sender_id}).\033[0m")
+    else:
+        print(f"\033[91m[ERROR] {response_get.status_code}\033[0m")
 
 def extraire_temps(message):
     match = re.search(r"(\d+)h(?: (\d+) min)?", message.replace("**", ""))
@@ -63,25 +73,18 @@ def afficher_compte_a_rebours(minutes):
         sys.stdout.flush()
         time.sleep(60)
         minutes -= 1
-    print("\n\033[92m[INFO] Temps écoulé.\033[0m")
+    print("\n\033[92m[INFO] Temps écoulé, envoi du message.\033[0m")
+    envoyer_message()
 
 def boucle_principale():
-    envoyer_message()
-    
-    prochaine_execution = datetime.now().timestamp() + 7200
-    
     while True:
         heure_actuelle = datetime.now()
-        timestamp_actuel = heure_actuelle.timestamp()
         
         if heure_actuelle.hour % 2 == 1 and heure_actuelle.minute == 0:
+            print("\033[93m[INFO] Heure impaire détectée, envoi du message.\033[0m")
             envoyer_message()
         
-        if timestamp_actuel >= prochaine_execution:
-            envoyer_message()
-            prochaine_execution = datetime.now().timestamp() + 7200
-        
-        print("\033[94m[INFO] Vérification chaque minute...\033[0m")
-        time.sleep(60)
+        print("[INFO] Attente de 2 heures avant la prochaine vérification...")
+        afficher_compte_a_rebours(120)
 
 boucle_principale()
