@@ -103,8 +103,8 @@ def ouvrir_lien(event):
     webbrowser.open("https://mediaboss.fr/trouver-token-discord/")  
 
 root = tk.Tk()
-root.title("Discord Pokémon Bot")
-root.geometry("460x350")
+root.title("Mudae Pokemon Automatiseur")
+root.geometry("455x330")
 
 tk.Label(root, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
 token_entry = tk.Entry(root, width=50, show="*")
@@ -113,21 +113,23 @@ token_entry.grid(row=0, column=1, padx=5, pady=5)
 info_label = tk.Label(root, text="🔗", fg="blue", cursor="hand2")
 info_label.grid(row=0, column=2, padx=5)
 info_label.bind("<Button-1>", ouvrir_lien)
-## info_label.bind("<Enter>", lambda e: info_label.config(text="(Obtenir un Token)"))
 info_label.bind("<Leave>", lambda e: info_label.config(text="🔗"))
 
 tk.Label(root, text="Channel ID :").grid(row=1, column=0, padx=5, pady=5, sticky="w")
 channel_entry = tk.Entry(root, width=50)
 channel_entry.grid(row=1, column=1, padx=5, pady=5)
 
-start_button = tk.Button(root, text="Démarrer", command=demarrer_bot, bg="green", fg="white")
-start_button.grid(row=2, column=0, padx=5, pady=5, columnspan=2)
+button_frame = tk.Frame(root)
+button_frame.grid(row=2, column=0, columnspan=3, pady=10)
 
-stop_button = tk.Button(root, text="Arrêter", command=arreter_bot, bg="red", fg="white")
-stop_button.grid(row=2, column=1, padx=5, pady=5)
+start_button = tk.Button(button_frame, text="Démarrer", command=demarrer_bot, bg="green", fg="white", width=12)
+start_button.pack(side=tk.LEFT, padx=10)
+
+stop_button = tk.Button(button_frame, text="Arrêter", command=arreter_bot, bg="red", fg="white", width=12)
+stop_button.pack(side=tk.RIGHT, padx=10)
 
 countdown_label = tk.Label(root, text="Temps restant : -")
-countdown_label.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
+countdown_label.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
 
 log_text = tk.Text(root, height=10, width=55)
 log_text.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
