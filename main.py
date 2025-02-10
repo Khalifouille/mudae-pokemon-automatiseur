@@ -2,6 +2,7 @@ import requests
 import json
 import re
 import time
+import sys
 from datetime import datetime
 
 channel_id = "1084908479745114212"
@@ -41,7 +42,7 @@ def envoyer_message():
                 print(f"Temps restant avant le prochain message: {temps_attente} minutes")
 
                 if temps_attente > 0:
-                    attendre(temps_attente * 60)
+                    afficher_compte_a_rebours(temps_attente)
                 
                 boucle_principale()
             else:
@@ -64,9 +65,14 @@ def extraire_temps(message):
         return int(minutes_match.group(1))
     return 0
 
-def attendre(temps):
-    print(f"Attente de {temps // 60} minutes...")
-    time.sleep(temps)
+def afficher_compte_a_rebours(minutes):
+    while minutes > 0:
+        sys.stdout.write(f"\r\033[92m[INFO] Temps restant : {minutes} min\033[0m")
+        sys.stdout.flush()
+        time.sleep(60)
+        minutes -= 1
+    print("\n\033[92m[INFO] Temps écoulé, envoi du message.\033[0m")
+    envoyer_message()
 
 def boucle_principale():
     while True:
@@ -76,6 +82,6 @@ def boucle_principale():
             envoyer_message()
 
         print("Attente de 2 heures avant le prochain message...")
-        time.sleep(2 * 3600)
+        afficher_compte_a_rebours(120)
 
 envoyer_message()
