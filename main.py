@@ -5,6 +5,7 @@ import time
 import threading
 import tkinter as tk
 from tkinter import messagebox
+from tkinter.ttk import Progressbar  
 import webbrowser
 import os
 
@@ -97,8 +98,13 @@ def extraire_temps(message):
 
 def afficher_compte_a_rebours(minutes):
     global running
+    countdown_label.config(text=f"Temps restant : {minutes} min")
+    progress_bar["value"] = 0 
+    progress_bar["maximum"] = minutes  
+
     while minutes > 0 and running:
         countdown_label.config(text=f"Temps restant : {minutes} min")
+        progress_bar["value"] = minutes  
         root.update()
         time.sleep(60)
         minutes -= 1
@@ -129,7 +135,7 @@ def ouvrir_lien(event):
 
 root = tk.Tk()
 root.title("Mudae Pokemon Automatiseur")
-root.geometry("455x360")
+root.geometry("455x400")
 
 tk.Label(root, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
 token_entry = tk.Entry(root, width=50, show="*")
@@ -159,8 +165,11 @@ save_button.grid(row=3, column=0, columnspan=3, pady=5)
 countdown_label = tk.Label(root, text="Temps restant : -")
 countdown_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
 
+progress_bar = Progressbar(root, length=300, mode='determinate')
+progress_bar.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+
 log_text = tk.Text(root, height=10, width=55)
-log_text.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5)
 
 charger_config()
 
