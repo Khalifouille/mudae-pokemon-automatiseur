@@ -6,8 +6,27 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 import webbrowser
+import os
 
 running = False
+CONFIG_FILE = "config.json"
+
+def sauvegarder_config():
+    config = {
+        "token": token_entry.get(),
+        "channel_id": channel_entry.get()
+    }
+    with open(CONFIG_FILE, "w") as file:
+        json.dump(config, file)
+    log_message("[INFO] Paramètres sauvegardés.")
+
+def charger_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r") as file:
+            config = json.load(file)
+            token_entry.insert(0, config.get("token", ""))
+            channel_entry.insert(0, config.get("channel_id", ""))
+        log_message("[INFO] Paramètres chargés.")
 
 def envoyer_message():
     global running
@@ -92,6 +111,7 @@ def demarrer_bot():
         messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
         return
     running = True
+    sauvegarder_config()
     threading.Thread(target=envoyer_message, daemon=True).start()
 
 def arreter_bot():
@@ -104,7 +124,7 @@ def ouvrir_lien(event):
 
 root = tk.Tk()
 root.title("Mudae Pokemon Automatiseur")
-root.geometry("455x330")
+root.geometry("455x360")
 
 tk.Label(root, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
 token_entry = tk.Entry(root, width=50, show="*")
@@ -128,10 +148,15 @@ start_button.pack(side=tk.LEFT, padx=10)
 stop_button = tk.Button(button_frame, text="Arrêter", command=arreter_bot, bg="red", fg="white", width=12)
 stop_button.pack(side=tk.RIGHT, padx=10)
 
+save_button = tk.Button(root, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
+save_button.grid(row=3, column=0, columnspan=3, pady=5)
+
 countdown_label = tk.Label(root, text="Temps restant : -")
-countdown_label.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
+countdown_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
 
 log_text = tk.Text(root, height=10, width=55)
-log_text.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+log_text.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+
+charger_config()
 
 root.mainloop()
