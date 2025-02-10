@@ -3,7 +3,6 @@ import json
 import re
 import time
 import sys
-from datetime import datetime
 
 channel_id = "1084908479745114212"
 url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
@@ -54,7 +53,7 @@ def analyser_reponse():
     print(f"Contenu: {contenu}")
     print(f"Envoyeur : {sender_id}")
 
-    if sender_id == "432610292342587392":
+    if sender_id == "432610292342587392": 
         if "Temps restant avant votre prochain $p" in contenu:
             temps_attente = extraire_temps(contenu)
             print(f"Temps restant avant le prochain message: {temps_attente} minutes")
@@ -87,25 +86,7 @@ def afficher_compte_a_rebours(minutes):
     envoyer_message()
 
 def demarrer_bot():
-    print("[INFO] Vérification du dernier message...")
-
-    dernier_message, envoyeur = obtenir_dernier_message()
-
-    if not dernier_message or not envoyeur:
-        print("\033[91m[ERROR] Impossible de récupérer le dernier message. Envoi immédiat.\033[0m")
-        envoyer_message()
-        return
-
-    if envoyeur != "432610292342587392":
-        print(f"\033[91m[ERROR] L'envoyeur n'est pas correct (ID: {envoyeur}).\033[0m")
-        return
-
-    if "Temps restant avant votre prochain $p" in dernier_message:
-        temps_attente = extraire_temps(dernier_message)
-        print(f"[INFO] Mudae indique une attente de {temps_attente} minutes.")
-        afficher_compte_a_rebours(temps_attente)
-    else:
-        print("[INFO] Aucun délai détecté, lancement du cycle de 2h.")
-        afficher_compte_a_rebours(120)
+    print("[INFO] Envoi de $p pour vérifier le dernier message de Mudae...")
+    envoyer_message()
 
 demarrer_bot()
