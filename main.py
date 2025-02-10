@@ -9,7 +9,12 @@ import webbrowser
 import os
 
 running = False
-CONFIG_FILE = "config.json"
+
+APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
+CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
+
+if not os.path.exists(APPDATA_DIR):
+    os.makedirs(APPDATA_DIR)
 
 def sauvegarder_config():
     config = {
