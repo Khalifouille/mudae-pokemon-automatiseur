@@ -6,7 +6,6 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Progressbar  
-# import ttkbootstrap as ttk
 import webbrowser
 import os
 
@@ -14,6 +13,7 @@ running = False
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
+ICON_PATH = "mudae.ico"
 
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
@@ -60,7 +60,6 @@ def envoyer_message():
 
 def obtenir_dernier_message(headers, url_get_message):
     response_get = requests.get(url_get_message, headers=headers)
-
     if response_get.status_code == 200:
         last_message = response_get.json()[0]
         return last_message['content'], last_message['author']['id']
@@ -71,11 +70,9 @@ def obtenir_dernier_message(headers, url_get_message):
 def analyser_reponse(headers, url_get_message):
     global running
     contenu, sender_id = obtenir_dernier_message(headers, url_get_message)
-
     if not contenu or not sender_id:
         log_message("[ERROR] Impossible de récupérer le dernier message.")
         return
-
     if sender_id == "432610292342587392":
         if "Temps restant avant votre prochain $p" in contenu:
             temps_attente = extraire_temps(contenu)
@@ -88,7 +85,6 @@ def analyser_reponse(headers, url_get_message):
 def extraire_temps(message):
     match = re.search(r"(\d+)h(?: (\d+) min)?", message.replace("**", ""))
     minutes_match = re.search(r"(\d+) min", message.replace("**", ""))
-
     if match:
         heures = int(match.group(1))
         minutes = int(match.group(2)) if match.group(2) else 0
@@ -102,7 +98,6 @@ def afficher_compte_a_rebours(minutes):
     countdown_label.config(text=f"Temps restant : {minutes} min")
     progress_bar["value"] = 0 
     progress_bar["maximum"] = minutes  
-
     while minutes > 0 and running:
         countdown_label.config(text=f"Temps restant : {minutes} min")
         progress_bar["value"] = minutes  
@@ -137,6 +132,9 @@ def ouvrir_lien(event):
 root = tk.Tk()
 root.title("Mudae Pokemon Automatiseur")
 root.geometry("455x400")
+
+if os.path.exists(ICON_PATH):
+    root.iconbitmap(ICON_PATH)
 
 tk.Label(root, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
 token_entry = tk.Entry(root, width=50, show="*")
