@@ -31,6 +31,9 @@ def log_message(message):
     log_text.insert(tk.END, message + "\n")
     log_text.see(tk.END)
 
+    with open(LOG_FILE, "a") as log_file:
+        log_file.write(message + "\n")
+
 def check_for_updates():
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
     try:
@@ -171,15 +174,14 @@ def jouer_alerte_sonore():
         pygame.mixer.music.load(SOUND_PATH)
         pygame.mixer.music.play()
         log_message("[INFO] Alerte sonore jouée.")
+        stop_music_button.grid() 
     else:
         log_message("[ERROR] Fichier sonore non trouvé.")
 
-def log_message(message):
-    log_text.insert(tk.END, message + "\n")
-    log_text.see(tk.END)
-
-    with open(LOG_FILE, "a") as log_file:
-        log_file.write(message + "\n")
+def stop_music():
+    pygame.mixer.music.stop()
+    log_message("[INFO] Musique arrêtée.")
+    stop_music_button.grid_remove()
 
 def toggle_bot():
     global running
@@ -250,6 +252,11 @@ progress_bar.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
 log_text = tk.Text(root, height=10, width=55)
 log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+
+stop_music_button = tk.Button(root, text="Stop Music", command=stop_music, bg="red", fg="white", width=12)
+stop_music_button.grid(row=7, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+stop_music_button.grid_remove()
+
 
 charger_config()
 check_for_updates()
