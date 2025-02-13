@@ -27,11 +27,17 @@ test_mode = False
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
 
-def log_message(message):
-    log_text.insert(tk.END, message + "\n")
+def log_message(message, level="info"):
+    tag = level.upper()
+    if level == "error":
+        log_text.insert(tk.END, f"[{tag}] {message}\n", "error")
+    elif level == "success":
+        log_text.insert(tk.END, f"[{tag}] {message}\n", "success")
+    else:
+        log_text.insert(tk.END, f"[{tag}] {message}\n", "info")
     log_text.see(tk.END)
     with open(LOG_FILE, "a") as log_file:
-        log_file.write(message + "\n")
+        log_file.write(f"[{tag}] {message}\n")
 
 def check_for_updates():
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -40,15 +46,15 @@ def check_for_updates():
         if response.status_code == 200:
             latest_version = response.json()["tag_name"]
             if latest_version != CURRENT_VERSION:
-                log_message(f"[UPDATE] Nouvelle version disponible : {latest_version} !")
-                log_message("Télécharge-la ici : https://github.com/Khalifouille/mudae-pokemon-automatiseur/releases/latest")
+                log_message(f"Nouvelle version disponible : {latest_version} !", "info")
+                log_message("Télécharge-la ici : https://github.com/Khalifouille/mudae-pokemon-automatiseur/releases/latest", "info")
                 prompt_update()
             else:
-                log_message("[INFO] Aucune mise à jour disponible.")
+                log_message("Aucune mise à jour disponible.", "info")
         else:
-            log_message("[ERROR] Impossible de vérifier les mises à jour.")
+            log_message("Impossible de vérifier les mises à jour.", "error")
     except Exception as e:
-        log_message(f"[ERROR] Erreur lors de la vérification des mises à jour : {e}")
+        log_message(f"Erreur lors de la vérification des mises à jour : {e}", "error")
 
 def prompt_update():
     result = messagebox.askyesno("Mise à jour disponible", "Une nouvelle version est disponible ! Veux-tu la télécharger maintenant ?")
@@ -63,7 +69,7 @@ def sauvegarder_config():
     }
     with open(CONFIG_FILE, "w") as file:
         json.dump(config, file)
-    log_message("[INFO] Paramètres sauvegardés.")
+    log_message("Paramètres sauvegardés.", "info")
 
 def charger_config():
     global test_mode
@@ -73,13 +79,13 @@ def charger_config():
             token_entry.insert(0, config.get("token", ""))
             channel_entry.insert(0, config.get("channel_id", ""))
             test_mode = config.get("test_mode", False)
-        log_message("[INFO] Paramètres chargés.")
+        log_message("Paramètres chargés.", "info")
         test_mode_var.set(test_mode)
 
 def envoyer_message():
     global running
     if test_mode:
-        log_message("[TEST MODE] Le message n'est pas envoyé. Mode test activé.")
+        log_message("Le message n'est pas envoyé. Mode test activé.", "info")
         temps_attente = 1
         afficher_compte_a_rebours(temps_attente)
         return
@@ -98,11 +104,11 @@ def envoyer_message():
     response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
 
     if response_send.status_code == 200:
-        log_message("[SUCCESS] Message envoyé avec succès !")
+        log_message("Message envoyé avec succès !", "success")
         time.sleep(2)
         analyser_reponse(headers, url_get_message)
     else:
-        log_message(f"[ERROR] {response_send.status_code}\n{response_send.text}")
+        log_message(f"{response_send.status_code}\n{response_send.text}", "error")
 
 def obtenir_dernier_message(headers, url_get_message):
     response_get = requests.get(url_get_message, headers=headers)
@@ -110,30 +116,30 @@ def obtenir_dernier_message(headers, url_get_message):
         last_message = response_get.json()[0]
         return last_message['content'], last_message['author']['id']
     else:
-        log_message(f"[ERROR] {response_get.status_code}")
+        log_message(f"{response_get.status_code}", "error")
         return None, None
 
 def analyser_reponse(headers, url_get_message):
     global running
 
     if test_mode:
-        log_message("[TEST MODE] Simulation d'une réponse de Mudae.")
+        log_message("Simulation d'une réponse de Mudae.", "info")
         temps_attente = 1
         afficher_compte_a_rebours(temps_attente)
         return
 
     contenu, sender_id = obtenir_dernier_message(headers, url_get_message)
     if not contenu or not sender_id:
-        log_message("[ERROR] Impossible de récupérer le dernier message.")
+        log_message("Impossible de récupérer le dernier message.", "error")
         return
 
     if sender_id == "432610292342587392":
         if "Temps restant avant votre prochain $p" in contenu:
             temps_attente = extraire_temps(contenu)
-            log_message(f"Temps d'attente : {temps_attente} minutes")
+            log_message(f"Temps d'attente : {temps_attente} minutes", "info")
             afficher_compte_a_rebours(temps_attente)
         else:
-            log_message("[INFO] Pokémon roll détecté, lancement du cycle de 2h.")
+            log_message("Pokémon roll détecté, lancement du cycle de 2h.", "info")
             afficher_compte_a_rebours(120)
 
 def extraire_temps(message):
@@ -163,7 +169,7 @@ def afficher_compte_a_rebours(minutes):
             minutes -= 1
 
         if running:
-            log_message("[INFO] Temps écoulé, envoi du message.")
+            log_message("Temps écoulé, envoi du message.", "info")
             envoyer_message()
             jouer_alerte_sonore()
 
@@ -173,21 +179,21 @@ def jouer_alerte_sonore():
     if os.path.exists(SOUND_PATH):
         pygame.mixer.music.load(SOUND_PATH)
         pygame.mixer.music.play()
-        log_message("[INFO] Alerte sonore jouée.")
-        stop_music_button.pack(pady=5)  
+        log_message("Alerte sonore jouée.", "info")
+        stop_music_button.pack(pady=5)
     else:
-        log_message("[ERROR] Fichier sonore non trouvé.")
+        log_message("Fichier sonore non trouvé.", "error")
 
 def stop_music():
     pygame.mixer.music.stop()
-    log_message("[INFO] Musique arrêtée.")
+    log_message("Musique arrêtée.", "info")
     stop_music_button.pack_forget()
 
 def toggle_bot():
     global running
     if running:
         running = False
-        log_message("[INFO] Bot arrêté.")
+        log_message("Bot arrêté.", "info")
         start_button.config(text="Démarrer", bootstyle="success")
     else:
         if not token_entry.get() or not channel_entry.get():
@@ -195,7 +201,7 @@ def toggle_bot():
             return
         running = True
         sauvegarder_config()
-        log_message("[INFO] Bot démarré.")
+        log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
         threading.Thread(target=envoyer_message, daemon=True).start()
 
@@ -222,7 +228,8 @@ main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 header_frame = ttk.Frame(main_frame)
 header_frame.pack(fill=tk.X, pady=5)
 
-ttk.Label(header_frame, text="Mudae Pokemon Automatiseur", font=("Segoe UI", 16, "bold")).pack(side=tk.LEFT)
+title_label = ttk.Label(header_frame, text="Mudae Pokemon Automatiseur", font=("Segoe UI", 16, "bold"))
+title_label.pack(side=tk.TOP, pady=10)
 
 input_frame = ttk.Frame(main_frame)
 input_frame.pack(fill=tk.X, pady=10)
@@ -231,7 +238,7 @@ ttk.Label(input_frame, text="Token Discord :").grid(row=0, column=0, padx=5, pad
 token_entry = ttk.Entry(input_frame, width=50, show="*")
 token_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-info_label = ttk.Label(input_frame, text="🔗", foreground="blue", cursor="hand2")
+info_label = ttk.Label(input_frame, text="ℹ️", foreground="blue", cursor="hand2")
 info_label.grid(row=0, column=2, padx=5)
 info_label.bind("<Button-1>", ouvrir_lien)
 
@@ -267,6 +274,10 @@ log_frame.pack(fill=tk.BOTH, expand=True, pady=10)
 
 log_text = tk.Text(log_frame, height=10, width=55, wrap=tk.WORD)
 log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+log_text.tag_configure("error", foreground="red")
+log_text.tag_configure("success", foreground="green")
+log_text.tag_configure("info", foreground="orange")
 
 scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=log_text.yview)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
