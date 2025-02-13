@@ -48,7 +48,6 @@ def envoyer_message():
     url_get_message = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1"
 
     data = {"content": "$p", "tts": False}
-
     response_send = requests.post(url_send_message, headers=headers, data=json.dumps(data))
 
     if response_send.status_code == 200:
@@ -96,8 +95,9 @@ def extraire_temps(message):
 def afficher_compte_a_rebours(minutes):
     global running
     countdown_label.config(text=f"Temps restant : {minutes} min")
-    progress_bar["value"] = 0 
-    progress_bar["maximum"] = minutes  
+    progress_bar["value"] = 0
+    progress_bar["maximum"] = minutes
+
     while minutes > 0 and running:
         countdown_label.config(text=f"Temps restant : {minutes} min")
         progress_bar["value"] = minutes  
@@ -158,16 +158,17 @@ start_button = tk.Button(button_frame, text="Démarrer", command=toggle_bot, bg=
 start_button.pack(side=tk.LEFT, padx=10)
 
 save_button = tk.Button(root, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
-save_button.grid(row=3, column=0, columnspan=3, pady=5)
+save_button = tk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
+save_button.grid(row=0, column=1, padx=10, sticky="ew")
 
 countdown_label = tk.Label(root, text="Temps restant : -")
-countdown_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+countdown_label.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
 progress_bar = Progressbar(root, length=300, mode='determinate')
-progress_bar.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+progress_bar.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
 log_text = tk.Text(root, height=10, width=55)
-log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5)
+log_text.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
 
 charger_config()
 
