@@ -8,6 +8,7 @@ from tkinter import messagebox
 from tkinter.ttk import Progressbar  
 import webbrowser
 import os
+import pygame
 
 running = False
 test_mode = False  
@@ -16,9 +17,12 @@ APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")  
 ICON_PATH = "mudae.ico"
+SOUND_PATH = "music.mp3"
 
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
+
+pygame.mixer.init()
 
 def sauvegarder_config():
     config = {
@@ -120,8 +124,17 @@ def afficher_compte_a_rebours(minutes):
         if running:
             log_message("[INFO] Temps écoulé, envoi du message.")
             envoyer_message()
+            jouer_alerte_sonore() 
 
     threading.Thread(target=countdown, daemon=True).start()
+
+def jouer_alerte_sonore():
+    if os.path.exists(SOUND_PATH):
+        pygame.mixer.music.load(SOUND_PATH)
+        pygame.mixer.music.play()
+        log_message("[INFO] Alerte sonore jouée.")
+    else:
+        log_message("[ERROR] Fichier sonore non trouvé.")
 
 def log_message(message):
     log_text.insert(tk.END, message + "\n")
