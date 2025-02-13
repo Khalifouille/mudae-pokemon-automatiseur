@@ -85,7 +85,7 @@ def analyser_reponse(headers, url_get_message):
 
     if test_mode:
         log_message("[TEST MODE] Simulation d'une réponse de Mudae.")
-        temps_attente = 30
+        temps_attente = 1
         afficher_compte_a_rebours(temps_attente)
         return
 
