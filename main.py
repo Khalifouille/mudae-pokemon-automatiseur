@@ -10,11 +10,11 @@ import webbrowser
 import os
 
 running = False
-test_mode = False
+test_mode = False  
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
-LOG_FILE = os.path.join(APPDATA_DIR, "log.txt") 
+LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")  
 ICON_PATH = "mudae.ico"
 
 if not os.path.exists(APPDATA_DIR):
@@ -24,7 +24,7 @@ def sauvegarder_config():
     config = {
         "token": token_entry.get(),
         "channel_id": channel_entry.get(),
-        "test_mode": test_mode 
+        "test_mode": test_mode  
     }
     with open(CONFIG_FILE, "w") as file:
         json.dump(config, file)
@@ -108,16 +108,20 @@ def afficher_compte_a_rebours(minutes):
     progress_bar["value"] = 0
     progress_bar["maximum"] = minutes
 
-    while minutes > 0 and running:
-        countdown_label.config(text=f"Temps restant : {minutes} min")
-        progress_bar["value"] = progress_bar["maximum"] - minutes
-        root.update()
-        time.sleep(60)
-        minutes -= 1
+    def countdown():
+        nonlocal minutes
+        while minutes > 0 and running:
+            countdown_label.config(text=f"Temps restant : {minutes} min")
+            progress_bar["value"] = progress_bar["maximum"] - minutes
+            root.update()
+            time.sleep(60)
+            minutes -= 1
 
-    if running:
-        log_message("[INFO] Temps écoulé, envoi du message.")
-        envoyer_message()
+        if running:
+            log_message("[INFO] Temps écoulé, envoi du message.")
+            envoyer_message()
+
+    threading.Thread(target=countdown, daemon=True).start()
 
 def log_message(message):
     log_text.insert(tk.END, message + "\n")
@@ -148,7 +152,7 @@ def ouvrir_lien(event):
 def toggle_test_mode():
     global test_mode
     test_mode = not test_mode
-    sauvegarder_config()
+    sauvegarder_config()  
 
 root = tk.Tk()
 root.title("Mudae Pokemon Automatiseur")
