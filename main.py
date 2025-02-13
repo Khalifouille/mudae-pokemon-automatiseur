@@ -13,6 +13,7 @@ running = False
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
+LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 
 if not os.path.exists(APPDATA_DIR):
@@ -112,6 +113,9 @@ def afficher_compte_a_rebours(minutes):
 def log_message(message):
     log_text.insert(tk.END, message + "\n")
     log_text.see(tk.END)
+
+    with open(LOG_FILE, "a") as log_file:
+        log_file.write(message + "\n")
 
 def toggle_bot():
     global running
