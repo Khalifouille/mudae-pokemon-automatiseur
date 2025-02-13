@@ -82,10 +82,18 @@ def obtenir_dernier_message(headers, url_get_message):
 
 def analyser_reponse(headers, url_get_message):
     global running
+
+    if test_mode:
+        log_message("[TEST MODE] Simulation d'une réponse de Mudae.")
+        temps_attente = 30
+        afficher_compte_a_rebours(temps_attente)
+        return
+
     contenu, sender_id = obtenir_dernier_message(headers, url_get_message)
     if not contenu or not sender_id:
         log_message("[ERROR] Impossible de récupérer le dernier message.")
         return
+
     if sender_id == "432610292342587392":
         if "Temps restant avant votre prochain $p" in contenu:
             temps_attente = extraire_temps(contenu)
@@ -94,6 +102,7 @@ def analyser_reponse(headers, url_get_message):
         else:
             log_message("[INFO] Pokémon roll détecté, lancement du cycle de 2h.")
             afficher_compte_a_rebours(120)
+
 
 def extraire_temps(message):
     match = re.search(r"(\d+)h(?: (\d+) min)?", message.replace("**", ""))
