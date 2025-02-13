@@ -247,16 +247,15 @@ test_mode_checkbox.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="e
 countdown_label = tk.Label(root, text="Temps restant : -")
 countdown_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
+stop_music_button = tk.Button(root, text="Stop Music", command=stop_music, bg="red", fg="white", width=12)
+stop_music_button.grid(row=7, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+stop_music_button.grid_remove()
+
 progress_bar = Progressbar(root, length=300, mode='determinate')
 progress_bar.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
 log_text = tk.Text(root, height=10, width=55)
 log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
-
-stop_music_button = tk.Button(root, text="Stop Music", command=stop_music, bg="red", fg="white", width=12)
-stop_music_button.grid(row=7, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
-stop_music_button.grid_remove()
-
 
 charger_config()
 check_for_updates()
