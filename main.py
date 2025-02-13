@@ -19,10 +19,39 @@ LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
 
+GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
+CURRENT_VERSION = "1.0.0"
+
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
 
 pygame.mixer.init()
+
+def log_message(message):
+    log_text.insert(tk.END, message + "\n")
+    log_text.see(tk.END)
+
+def check_for_updates():
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            latest_version = response.json()["tag_name"]
+            if latest_version != CURRENT_VERSION:
+                log_message(f"[UPDATE] Nouvelle version disponible : {latest_version} !")
+                log_message("Télécharge-la ici : https://github.com/Khalifouille/mudae-pokemon-automatiseur/releases/latest")
+                prompt_update()
+            else:
+                log_message("[INFO] Aucune mise à jour disponible.")
+        else:
+            log_message("[ERROR] Impossible de vérifier les mises à jour.")
+    except Exception as e:
+        log_message(f"[ERROR] Erreur lors de la vérification des mises à jour : {e}")
+
+def prompt_update():
+    result = messagebox.askyesno("Mise à jour disponible", "Une nouvelle version est disponible ! Veux-tu la télécharger maintenant ?")
+    if result:
+        webbrowser.open("https://github.com/Khalifouille/mudae-pokemon-automatiseur/releases/latest")
 
 def sauvegarder_config():
     config = {
@@ -223,5 +252,5 @@ log_text = tk.Text(root, height=10, width=55)
 log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
 
 charger_config()
-
+check_for_updates()
 root.mainloop()
