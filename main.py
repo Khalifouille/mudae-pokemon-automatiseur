@@ -12,7 +12,6 @@ from ttkbootstrap import Style
 
 pygame.mixer.init()
 
-# Chemins des fichiers
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
@@ -75,12 +74,14 @@ def charger_config():
             channel_entry.insert(0, config.get("channel_id", ""))
             test_mode = config.get("test_mode", False)
         log_message("[INFO] Paramètres chargés.")
-        test_mode_checkbox.state(["selected"]) if test_mode else test_mode_checkbox.state(["!selected"])
+        test_mode_var.set(test_mode)
 
 def envoyer_message():
     global running
     if test_mode:
         log_message("[TEST MODE] Le message n'est pas envoyé. Mode test activé.")
+        temps_attente = 1
+        afficher_compte_a_rebours(temps_attente)
         return
 
     headers = {
@@ -203,7 +204,7 @@ def ouvrir_lien(event):
 
 def toggle_test_mode():
     global test_mode
-    test_mode = not test_mode
+    test_mode = test_mode_var.get()
     sauvegarder_config()
 
 style = Style(theme="darkly")
@@ -247,7 +248,8 @@ start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-test_mode_checkbox = ttk.Checkbutton(main_frame, text="Mode Test", command=toggle_test_mode, bootstyle="round-toggle")
+test_mode_var = tk.BooleanVar()
+test_mode_checkbox = ttk.Checkbutton(main_frame, text="Mode Test", variable=test_mode_var, command=toggle_test_mode, bootstyle="round-toggle")
 test_mode_checkbox.pack(pady=5)
 
 countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
