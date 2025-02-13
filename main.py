@@ -9,6 +9,8 @@ import re
 import webbrowser
 import pygame
 from ttkbootstrap import Style
+import pystray
+from PIL import Image
 
 pygame.mixer.init()
 
@@ -213,6 +215,18 @@ def toggle_test_mode():
     test_mode = test_mode_var.get()
     sauvegarder_config()
 
+def on_closing():
+    root.withdraw()
+    tray_icon.visible = True
+
+def quit_application(icon, item):
+    icon.stop()
+    root.destroy()
+
+def show_window(icon, item):
+    icon.stop()
+    root.deiconify()
+
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
@@ -285,5 +299,11 @@ log_text.config(yscrollcommand=scrollbar.set)
 
 charger_config()
 check_for_updates()
+
+image = Image.open(ICON_PATH)
+menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
+tray_icon = pystray.Icon("MudaeBot", image, "Mudae Pokemon Automatiseur", menu)
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()
