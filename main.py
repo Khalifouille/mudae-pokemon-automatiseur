@@ -112,19 +112,21 @@ def log_message(message):
     log_text.insert(tk.END, message + "\n")
     log_text.see(tk.END)
 
-def demarrer_bot():
+def toggle_bot():
     global running
-    if not token_entry.get() or not channel_entry.get():
-        messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
-        return
-    running = True
-    sauvegarder_config()
-    threading.Thread(target=envoyer_message, daemon=True).start()
-
-def arreter_bot():
-    global running
-    running = False
-    log_message("[INFO] Bot arrêté.")
+    if running:
+        running = False
+        log_message("[INFO] Bot arrêté.")
+        start_button.config(text="Démarrer", bg="green")
+    else:
+        if not token_entry.get() or not channel_entry.get():
+            messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
+            return
+        running = True
+        sauvegarder_config()
+        log_message("[INFO] Bot démarré.")
+        start_button.config(text="Arrêter", bg="red")
+        threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
     webbrowser.open("https://mediaboss.fr/trouver-token-discord/")  
@@ -152,11 +154,8 @@ channel_entry.grid(row=1, column=1, padx=5, pady=5)
 button_frame = tk.Frame(root)
 button_frame.grid(row=2, column=0, columnspan=3, pady=10)
 
-start_button = tk.Button(button_frame, text="Démarrer", command=demarrer_bot, bg="green", fg="white", width=12)
+start_button = tk.Button(button_frame, text="Démarrer", command=toggle_bot, bg="green", fg="white", width=12)
 start_button.pack(side=tk.LEFT, padx=10)
-
-stop_button = tk.Button(button_frame, text="Arrêter", command=arreter_bot, bg="red", fg="white", width=12)
-stop_button.pack(side=tk.RIGHT, padx=10)
 
 save_button = tk.Button(root, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
 save_button.grid(row=3, column=0, columnspan=3, pady=5)
