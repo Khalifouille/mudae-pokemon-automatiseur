@@ -10,10 +10,11 @@ import webbrowser
 import os
 
 running = False
+test_mode = False
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
-LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
+LOG_FILE = os.path.join(APPDATA_DIR, "log.txt") 
 ICON_PATH = "mudae.ico"
 
 if not os.path.exists(APPDATA_DIR):
@@ -22,22 +23,30 @@ if not os.path.exists(APPDATA_DIR):
 def sauvegarder_config():
     config = {
         "token": token_entry.get(),
-        "channel_id": channel_entry.get()
+        "channel_id": channel_entry.get(),
+        "test_mode": test_mode 
     }
     with open(CONFIG_FILE, "w") as file:
         json.dump(config, file)
     log_message("[INFO] Paramètres sauvegardés.")
 
 def charger_config():
+    global test_mode
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as file:
             config = json.load(file)
             token_entry.insert(0, config.get("token", ""))
             channel_entry.insert(0, config.get("channel_id", ""))
+            test_mode = config.get("test_mode", False)  
         log_message("[INFO] Paramètres chargés.")
+        test_mode_checkbox.select() if test_mode else test_mode_checkbox.deselect()
 
 def envoyer_message():
     global running
+    if test_mode:
+        log_message("[TEST MODE] Le message n'est pas envoyé. Mode test activé.")
+        return
+
     headers = {
         "accept": "*/*",
         "authorization": token_entry.get(),
@@ -136,6 +145,11 @@ def toggle_bot():
 def ouvrir_lien(event):
     webbrowser.open("https://mediaboss.fr/trouver-token-discord/")  
 
+def toggle_test_mode():
+    global test_mode
+    test_mode = not test_mode
+    sauvegarder_config()
+
 root = tk.Tk()
 root.title("Mudae Pokemon Automatiseur")
 root.geometry("500x450")
@@ -170,14 +184,17 @@ start_button.grid(row=0, column=0, padx=10, sticky="ew")
 save_button = tk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
 save_button.grid(row=0, column=1, padx=10, sticky="ew")
 
+test_mode_checkbox = tk.Checkbutton(root, text="Mode Test", command=toggle_test_mode)
+test_mode_checkbox.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+
 countdown_label = tk.Label(root, text="Temps restant : -")
-countdown_label.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+countdown_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
 progress_bar = Progressbar(root, length=300, mode='determinate')
-progress_bar.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+progress_bar.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
 
 log_text = tk.Text(root, height=10, width=55)
-log_text.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
 
 charger_config()
 
