@@ -174,14 +174,14 @@ def jouer_alerte_sonore():
         pygame.mixer.music.load(SOUND_PATH)
         pygame.mixer.music.play()
         log_message("[INFO] Alerte sonore jouée.")
-        stop_music_button.grid()
+        stop_music_button.pack(pady=5)  
     else:
         log_message("[ERROR] Fichier sonore non trouvé.")
 
 def stop_music():
     pygame.mixer.music.stop()
     log_message("[INFO] Musique arrêtée.")
-    stop_music_button.grid_remove()
+    stop_music_button.pack_forget()
 
 def toggle_bot():
     global running
@@ -210,7 +210,7 @@ def toggle_test_mode():
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
-root.geometry("600x500")
+root.geometry("600x597")
 root.minsize(500, 450)
 
 if os.path.exists(ICON_PATH):
