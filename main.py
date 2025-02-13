@@ -1,36 +1,36 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import os
+import threading
+import time
 import requests
 import json
 import re
-import time
-import threading
-import tkinter as tk
-from tkinter import messagebox
-from tkinter.ttk import Progressbar  
 import webbrowser
-import os
 import pygame
+from ttkbootstrap import Style
 
-running = False
-test_mode = False  
+pygame.mixer.init()
 
+# Chemins des fichiers
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
-LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")  
+LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
 CURRENT_VERSION = "1.0.0"
 
+running = False
+test_mode = False
+
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
-
-pygame.mixer.init()
 
 def log_message(message):
     log_text.insert(tk.END, message + "\n")
     log_text.see(tk.END)
-
     with open(LOG_FILE, "a") as log_file:
         log_file.write(message + "\n")
 
@@ -60,7 +60,7 @@ def sauvegarder_config():
     config = {
         "token": token_entry.get(),
         "channel_id": channel_entry.get(),
-        "test_mode": test_mode  
+        "test_mode": test_mode
     }
     with open(CONFIG_FILE, "w") as file:
         json.dump(config, file)
@@ -73,9 +73,9 @@ def charger_config():
             config = json.load(file)
             token_entry.insert(0, config.get("token", ""))
             channel_entry.insert(0, config.get("channel_id", ""))
-            test_mode = config.get("test_mode", False)  
+            test_mode = config.get("test_mode", False)
         log_message("[INFO] Paramètres chargés.")
-        test_mode_checkbox.select() if test_mode else test_mode_checkbox.deselect()
+        test_mode_checkbox.state(["selected"]) if test_mode else test_mode_checkbox.state(["!selected"])
 
 def envoyer_message():
     global running
@@ -135,7 +135,6 @@ def analyser_reponse(headers, url_get_message):
             log_message("[INFO] Pokémon roll détecté, lancement du cycle de 2h.")
             afficher_compte_a_rebours(120)
 
-
 def extraire_temps(message):
     match = re.search(r"(\d+)h(?: (\d+) min)?", message.replace("**", ""))
     minutes_match = re.search(r"(\d+) min", message.replace("**", ""))
@@ -165,7 +164,7 @@ def afficher_compte_a_rebours(minutes):
         if running:
             log_message("[INFO] Temps écoulé, envoi du message.")
             envoyer_message()
-            jouer_alerte_sonore() 
+            jouer_alerte_sonore()
 
     threading.Thread(target=countdown, daemon=True).start()
 
@@ -174,7 +173,7 @@ def jouer_alerte_sonore():
         pygame.mixer.music.load(SOUND_PATH)
         pygame.mixer.music.play()
         log_message("[INFO] Alerte sonore jouée.")
-        stop_music_button.grid() 
+        stop_music_button.grid()
     else:
         log_message("[ERROR] Fichier sonore non trouvé.")
 
@@ -188,7 +187,7 @@ def toggle_bot():
     if running:
         running = False
         log_message("[INFO] Bot arrêté.")
-        start_button.config(text="Démarrer", bg="green")
+        start_button.config(text="Démarrer", bootstyle="success")
     else:
         if not token_entry.get() or not channel_entry.get():
             messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
@@ -196,67 +195,82 @@ def toggle_bot():
         running = True
         sauvegarder_config()
         log_message("[INFO] Bot démarré.")
-        start_button.config(text="Arrêter", bg="red")
+        start_button.config(text="Arrêter", bootstyle="danger")
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
-    webbrowser.open("https://mediaboss.fr/trouver-token-discord/")  
+    webbrowser.open("https://mediaboss.fr/trouver-token-discord/")
 
 def toggle_test_mode():
     global test_mode
     test_mode = not test_mode
-    sauvegarder_config()  
+    sauvegarder_config()
 
-root = tk.Tk()
+style = Style(theme="darkly")
+root = style.master
 root.title("Mudae Pokemon Automatiseur")
-root.geometry("500x450")
-root.minsize(400, 400)
+root.geometry("600x500")
+root.minsize(500, 450)
 
 if os.path.exists(ICON_PATH):
     root.iconbitmap(ICON_PATH)
 
-root.grid_columnconfigure(1, weight=1)
-root.grid_rowconfigure(5, weight=1)
+main_frame = ttk.Frame(root)
+main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-tk.Label(root, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-token_entry = tk.Entry(root, width=50, show="*")
+header_frame = ttk.Frame(main_frame)
+header_frame.pack(fill=tk.X, pady=5)
+
+ttk.Label(header_frame, text="Mudae Pokemon Automatiseur", font=("Segoe UI", 16, "bold")).pack(side=tk.LEFT)
+
+input_frame = ttk.Frame(main_frame)
+input_frame.pack(fill=tk.X, pady=10)
+
+ttk.Label(input_frame, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+token_entry = ttk.Entry(input_frame, width=50, show="*")
 token_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-info_label = tk.Label(root, text="🔗", fg="blue", cursor="hand2")
+info_label = ttk.Label(input_frame, text="🔗", foreground="blue", cursor="hand2")
 info_label.grid(row=0, column=2, padx=5)
 info_label.bind("<Button-1>", ouvrir_lien)
 
-tk.Label(root, text="Channel ID :").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-channel_entry = tk.Entry(root, width=50)
+ttk.Label(input_frame, text="Channel ID :").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+channel_entry = ttk.Entry(input_frame, width=50)
 channel_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
-button_frame = tk.Frame(root)
-button_frame.grid(row=2, column=0, columnspan=3, pady=10, sticky="ew")
-button_frame.grid_columnconfigure(0, weight=1)
-button_frame.grid_columnconfigure(1, weight=1)
+button_frame = ttk.Frame(main_frame)
+button_frame.pack(fill=tk.X, pady=10)
 
-start_button = tk.Button(button_frame, text="Démarrer", command=toggle_bot, bg="green", fg="white", width=12)
-start_button.grid(row=0, column=0, padx=10, sticky="ew")
+start_button = ttk.Button(button_frame, text="Démarrer", command=toggle_bot, bootstyle="success")
+start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-save_button = tk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
-save_button.grid(row=0, column=1, padx=10, sticky="ew")
+save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
+save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-test_mode_checkbox = tk.Checkbutton(root, text="Mode Test", command=toggle_test_mode)
-test_mode_checkbox.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+test_mode_checkbox = ttk.Checkbutton(main_frame, text="Mode Test", command=toggle_test_mode, bootstyle="round-toggle")
+test_mode_checkbox.pack(pady=5)
 
-countdown_label = tk.Label(root, text="Temps restant : -")
-countdown_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
+countdown_label.pack(pady=5)
 
-stop_music_button = tk.Button(root, text="Stop Music", command=stop_music, bg="red", fg="white", width=12)
-stop_music_button.grid(row=7, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
-stop_music_button.grid_remove()
+progress_bar = ttk.Progressbar(main_frame, length=300, mode='determinate')
+progress_bar.pack(fill=tk.X, pady=10)
 
-progress_bar = Progressbar(root, length=300, mode='determinate')
-progress_bar.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+stop_music_button = ttk.Button(main_frame, text="Stop Music", command=stop_music, bootstyle="danger")
+stop_music_button.pack(pady=5)
+stop_music_button.pack_forget()
 
-log_text = tk.Text(root, height=10, width=55)
-log_text.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+log_frame = ttk.Frame(main_frame)
+log_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+
+log_text = tk.Text(log_frame, height=10, width=55, wrap=tk.WORD)
+log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=log_text.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+log_text.config(yscrollcommand=scrollbar.set)
 
 charger_config()
 check_for_updates()
+
 root.mainloop()
