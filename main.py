@@ -100,10 +100,11 @@ def afficher_compte_a_rebours(minutes):
 
     while minutes > 0 and running:
         countdown_label.config(text=f"Temps restant : {minutes} min")
-        progress_bar["value"] = minutes  
+        progress_bar["value"] = progress_bar["maximum"] - minutes
         root.update()
         time.sleep(60)
         minutes -= 1
+
     if running:
         log_message("[INFO] Temps écoulé, envoi du message.")
         envoyer_message()
@@ -133,31 +134,35 @@ def ouvrir_lien(event):
 
 root = tk.Tk()
 root.title("Mudae Pokemon Automatiseur")
-root.geometry("455x400")
+root.geometry("500x450")
+root.minsize(400, 400)
 
 if os.path.exists(ICON_PATH):
     root.iconbitmap(ICON_PATH)
 
+root.grid_columnconfigure(1, weight=1)
+root.grid_rowconfigure(5, weight=1)
+
 tk.Label(root, text="Token Discord :").grid(row=0, column=0, padx=5, pady=5, sticky="w")
 token_entry = tk.Entry(root, width=50, show="*")
-token_entry.grid(row=0, column=1, padx=5, pady=5)
+token_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
 info_label = tk.Label(root, text="🔗", fg="blue", cursor="hand2")
 info_label.grid(row=0, column=2, padx=5)
 info_label.bind("<Button-1>", ouvrir_lien)
-info_label.bind("<Leave>", lambda e: info_label.config(text="🔗"))
 
 tk.Label(root, text="Channel ID :").grid(row=1, column=0, padx=5, pady=5, sticky="w")
 channel_entry = tk.Entry(root, width=50)
-channel_entry.grid(row=1, column=1, padx=5, pady=5)
+channel_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
 button_frame = tk.Frame(root)
-button_frame.grid(row=2, column=0, columnspan=3, pady=10)
+button_frame.grid(row=2, column=0, columnspan=3, pady=10, sticky="ew")
+button_frame.grid_columnconfigure(0, weight=1)
+button_frame.grid_columnconfigure(1, weight=1)
 
 start_button = tk.Button(button_frame, text="Démarrer", command=toggle_bot, bg="green", fg="white", width=12)
-start_button.pack(side=tk.LEFT, padx=10)
+start_button.grid(row=0, column=0, padx=10, sticky="ew")
 
-save_button = tk.Button(root, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
 save_button = tk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bg="blue", fg="white", width=12)
 save_button.grid(row=0, column=1, padx=10, sticky="ew")
 
