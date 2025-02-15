@@ -2,6 +2,7 @@ import requests
 import time
 import json
 from collections import defaultdict
+import re
 from config import USER_TOKEN
 
 USER_TOKEN
@@ -37,6 +38,18 @@ def envoyer_arl():
         print("Commande $arl envoyée avec succès.")
     else:
         print(f"Erreur lors de l'envoi de la commande : {response.status_code} - {response.text}")
+
+def envoyer_p(nombre):
+    for _ in range(nombre):
+        payload = {
+            "content": "$p"
+        }
+        response = requests.post(SEND_MESSAGE_URL, headers=headers, json=payload)
+        if response.status_code == 200:
+            print("Commande $p envoyée avec succès.")
+        else:
+            print(f"Erreur lors de l'envoi de la commande : {response.status_code} - {response.text}")
+        time.sleep(1)
 
 def recuperer_dernier_message():
     response = requests.get(FETCH_MESSAGES_URL, headers=headers)
@@ -127,6 +140,12 @@ def trouver_doublons(pokemon_liste):
     doublons = {pokemon: count for pokemon, count in compteur_pokemon.items() if count > 1}
     return doublons
 
+def extraire_nombre_en_stock(contenu):
+    match = re.search(r"\((\d+) en stock\)", contenu)
+    if match:
+        return int(match.group(1))
+    return 0
+
 def main():
     envoyer_pd()
     print("Attente de la réponse de Mudae...")
@@ -143,6 +162,17 @@ def main():
                 for pokemon, count in doublons.items():
                     print(f"{pokemon} : {count} exemplaires")
                 envoyer_arl()
+                time.sleep(2)
+                dernier_message_arl = recuperer_dernier_message()
+                if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
+                    nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
+                    if nombre_en_stock > 0:
+                        print(f"Nombre de pokérolls en stock : {nombre_en_stock}")
+                        envoyer_p(nombre_en_stock)
+                    else:
+                        print("Aucun pokéroll en stock trouvé.")
+                else:
+                    print("Aucun message de Mudae après $arl trouvé.")
             else:
                 print("Aucun Pokémon en double trouvé.")
         else:
