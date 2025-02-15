@@ -21,6 +21,9 @@ LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
 
+CHANNEL_ID = "1084908479745114212"
+GUILD_ID = "979531608459726878"
+
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
 CURRENT_VERSION = "1.0.0"
 
@@ -229,7 +232,158 @@ def show_window(icon, item):
     icon.stop()
     root.deiconify()
 
-def envoyer_pd_arl():
+def envoyer_pd():
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
+    payload = {"content": "$pd"}
+    response = requests.post(url_send_message, headers=headers, json=payload)
+    if response.status_code == 200:
+        log_message("Commande $pd envoyée avec succès.", "success")
+    else:
+        log_message(f"Erreur lors de l'envoi de $pd : {response.status_code} - {response.text}", "error")
+
+def envoyer_arl():
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
+    payload = {"content": "$arl"}
+    response = requests.post(url_send_message, headers=headers, json=payload)
+    if response.status_code == 200:
+        log_message("Commande $arl envoyée avec succès.", "success")
+    else:
+        log_message(f"Erreur lors de l'envoi de $arl : {response.status_code} - {response.text}", "error")
+
+def envoyer_p(nombre):
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
+    for _ in range(nombre):
+        payload = {"content": "$p"}
+        response = requests.post(url_send_message, headers=headers, json=payload)
+        if response.status_code == 200:
+            log_message("Commande $p envoyée avec succès.", "success")
+        else:
+            log_message(f"Erreur lors de l'envoi de $p : {response.status_code} - {response.text}", "error")
+        time.sleep(1)
+
+def recuperer_dernier_message():
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_get_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages?limit=1"
+    response = requests.get(url_get_message, headers=headers)
+    if response.status_code == 200:
+        messages = response.json()
+        if messages:
+            return messages[0]
+        else:
+            log_message("Aucun message trouvé dans le canal.", "error")
+    else:
+        log_message(f"Erreur lors de la récupération des messages : {response.status_code} - {response.text}", "error")
+    return None
+
+def extraire_pokemon_de_lembed(embed):
+    pokemon_liste = []
+    if "description" in embed:
+        description = embed["description"]
+        pokemon_liste = [line.split(">")[1].strip() for line in description.split("\n") if ">" in line]
+    return pokemon_liste
+
+def cliquer_bouton(message_id, custom_id):
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_interact = f"https://discord.com/api/v9/interactions"
+    payload = {
+        "type": 3,
+        "guild_id": GUILD_ID,
+        "channel_id": channel_entry.get(),
+        "message_id": message_id,
+        "application_id": "432610292342587392",
+        "session_id": "2ee2419846b43881374738c20879e3c4",
+        "data": {
+            "component_type": 2,
+            "custom_id": custom_id
+        }
+    }
+    response = requests.post(url_interact, headers=headers, json=payload)
+    if response.status_code == 204:
+        log_message(f"Bouton {custom_id} cliqué avec succès.", "success")
+    else:
+        log_message(f"Erreur lors du clic sur le bouton : {response.status_code} - {response.text}", "error")
+
+def est_derniere_page(embed):
+    if "footer" in embed:
+        footer_text = embed["footer"]["text"]
+        if "Page" in footer_text:
+            page_actuelle = int(footer_text.split("Page")[1].split("/")[0].strip())
+            pages_totales = int(footer_text.split("Page")[1].split("/")[1].strip())
+            return page_actuelle >= pages_totales
+    return False
+
+def recuperer_toutes_les_pages(message_id):
+    message_actuel_id = message_id
+    tous_les_pokemon = []
+    while True:
+        dernier_message = recuperer_dernier_message()
+        if not dernier_message or dernier_message["id"] != message_actuel_id:
+            log_message("Fin des pages.", "info")
+            break
+
+        if "embeds" in dernier_message and len(dernier_message["embeds"]) > 0:
+            embed = dernier_message["embeds"][0]
+            pokemon_liste = extraire_pokemon_de_lembed(embed)
+            tous_les_pokemon.extend(pokemon_liste)
+
+            if est_derniere_page(embed):
+                log_message("Dernière page atteinte.", "info")
+                break
+
+        if "components" in dernier_message and len(dernier_message["components"]) > 0:
+            boutons = dernier_message["components"][0]["components"]
+            bouton_suivant = next((btn for btn in boutons if btn.get("emoji", {}).get("name") == "pright"), None)
+            if bouton_suivant:
+                cliquer_bouton(message_actuel_id, bouton_suivant["custom_id"])
+                time.sleep(2)
+                message_actuel_id = dernier_message["id"]
+            else:
+                log_message("Aucun bouton 'pright' trouvé.", "info")
+                break
+        else:
+            log_message("Aucun bouton trouvé dans le message.", "info")
+            break
+
+    return tous_les_pokemon
+
+def trouver_doublons(pokemon_liste):
+    compteur_pokemon = defaultdict(int)
+    for pokemon in pokemon_liste:
+        compteur_pokemon[pokemon] += 1
+
+    doublons = {pokemon: count for pokemon, count in compteur_pokemon.items() if count > 1}
+    return doublons
+
+def extraire_nombre_en_stock(contenu):
+    match = re.search(r"\((\d+) en stock\)", contenu)
+    if match:
+        return int(match.group(1))
+    return 0
+
+def executer_pd_arl():
     global pd_arl_running
     if pd_arl_running:
         return
@@ -237,65 +391,32 @@ def envoyer_pd_arl():
     pd_arl_running = True
     log_message("Démarrage du script $pd et $arl.", "info")
 
-    headers = {
-        "accept": "*/*",
-        "authorization": token_entry.get(),
-        "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    }
-    channel_id = channel_entry.get()
-    url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
-    url_get_message = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1"
-
-    def envoyer_pd():
-        payload = {"content": "$pd"}
-        response = requests.post(url_send_message, headers=headers, json=payload)
-        if response.status_code == 200:
-            log_message("Commande $pd envoyée avec succès.", "success")
-        else:
-            log_message(f"Erreur lors de l'envoi de $pd : {response.status_code} - {response.text}", "error")
-
-    def envoyer_arl():
-        payload = {"content": "$arl"}
-        response = requests.post(url_send_message, headers=headers, json=payload)
-        if response.status_code == 200:
-            log_message("Commande $arl envoyée avec succès.", "success")
-        else:
-            log_message(f"Erreur lors de l'envoi de $arl : {response.status_code} - {response.text}", "error")
-
-    def extraire_nombre_en_stock(contenu):
-        match = re.search(r"\((\d+) en stock\)", contenu)
-        if match:
-            return int(match.group(1))
-        return 0
-
-    def recuperer_dernier_message():
-        response = requests.get(url_get_message, headers=headers)
-        if response.status_code == 200:
-            messages = response.json()
-            if messages:
-                return messages[0]
-        return None
-
     envoyer_pd()
     time.sleep(5)
     dernier_message = recuperer_dernier_message()
     if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
         log_message("Message de Mudae détecté.", "info")
-        envoyer_arl()
-        time.sleep(2)
-        dernier_message_arl = recuperer_dernier_message()
-        if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
-            nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
-            if nombre_en_stock > 0:
-                log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
-                for _ in range(nombre_en_stock + 1):
-                    envoyer_message()
-                    time.sleep(1)
+        tous_les_pokemon = recuperer_toutes_les_pages(dernier_message["id"])
+        doublons = trouver_doublons(tous_les_pokemon)
+
+        if doublons:
+            log_message("\nPokémon en double :", "info")
+            for pokemon, count in doublons.items():
+                log_message(f"{pokemon} : {count} exemplaires", "info")
+            envoyer_arl()
+            time.sleep(2)
+            dernier_message_arl = recuperer_dernier_message()
+            if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
+                nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
+                if nombre_en_stock > 0:
+                    log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
+                    envoyer_p(nombre_en_stock + 1)
+                else:
+                    log_message("Aucun pokéroll en stock trouvé.", "info")
             else:
-                log_message("Aucun pokéroll en stock trouvé.", "info")
+                log_message("Aucun message de Mudae après $arl trouvé.", "error")
         else:
-            log_message("Aucun message de Mudae après $arl trouvé.", "error")
+            log_message("Aucun Pokémon en double trouvé.", "info")
     else:
         log_message("Aucun message de Mudae trouvé après $pd.", "error")
 
@@ -304,7 +425,7 @@ def envoyer_pd_arl():
 
 def lancer_pd_arl_intervalle():
     while True:
-        envoyer_pd_arl()
+        executer_pd_arl()
         time.sleep(10800)
 
 style = Style(theme="darkly")
