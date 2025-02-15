@@ -129,7 +129,6 @@ def recuperer_toutes_les_pages(message_id):
         else:
             print("Aucun bouton trouvé dans le message.")
             break
-
     return tous_les_pokemon
 
 def trouver_doublons(pokemon_liste):

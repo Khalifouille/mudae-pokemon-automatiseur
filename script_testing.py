@@ -298,7 +298,16 @@ def extraire_pokemon_de_lembed(embed):
     pokemon_liste = []
     if "description" in embed:
         description = embed["description"]
-        pokemon_liste = [line.split(">")[1].strip() for line in description.split("\n") if ">" in line]
+        print(description)
+        for line in description.split("\n"):
+            if ":" in line:
+                match = re.match(r"<:[^:]+:\d+>\s*([\wÉéèàùçôûîïêë-]+)(?:\s*x(\d+))?", line.strip())
+                if match:
+                    nom_pokemon = match.group(1).strip()
+                    multiplicite = int(match.group(2)) if match.group(2) else 1
+                    pokemon_liste.append((nom_pokemon, multiplicite))
+                    print(f"Nom: {nom_pokemon}, Quantité: {multiplicite}")
+    print(pokemon_liste)
     return pokemon_liste
 
 def cliquer_bouton(message_id, custom_id):
@@ -371,8 +380,8 @@ def recuperer_toutes_les_pages(message_id):
 
 def trouver_doublons(pokemon_liste):
     compteur_pokemon = defaultdict(int)
-    for pokemon in pokemon_liste:
-        compteur_pokemon[pokemon] += 1
+    for pokemon, multiplicite in pokemon_liste:
+        compteur_pokemon[pokemon] += multiplicite
 
     doublons = {pokemon: count for pokemon, count in compteur_pokemon.items() if count > 1}
     return doublons
