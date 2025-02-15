@@ -3,3 +3,4 @@ build/main/localpycs/pyimod02_importers.pyc
 /dist
 main.spec
 main.spec
+config.py

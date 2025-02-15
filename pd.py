@@ -2,7 +2,9 @@ import requests
 import time
 import json
 from collections import defaultdict
+from config import USER_TOKEN
 
+USER_TOKEN
 CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
 
