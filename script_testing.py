@@ -11,6 +11,7 @@ import pygame
 from ttkbootstrap import Style
 import pystray
 from PIL import Image
+from collections import defaultdict
 
 pygame.mixer.init()
 
@@ -25,6 +26,7 @@ CURRENT_VERSION = "1.0.0"
 
 running = False
 test_mode = False
+pd_arl_running = False
 
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
@@ -227,6 +229,84 @@ def show_window(icon, item):
     icon.stop()
     root.deiconify()
 
+def envoyer_pd_arl():
+    global pd_arl_running
+    if pd_arl_running:
+        return
+
+    pd_arl_running = True
+    log_message("Démarrage du script $pd et $arl.", "info")
+
+    headers = {
+        "accept": "*/*",
+        "authorization": token_entry.get(),
+        "content-type": "application/json",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
+    channel_id = channel_entry.get()
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_id}/messages"
+    url_get_message = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1"
+
+    def envoyer_pd():
+        payload = {"content": "$pd"}
+        response = requests.post(url_send_message, headers=headers, json=payload)
+        if response.status_code == 200:
+            log_message("Commande $pd envoyée avec succès.", "success")
+        else:
+            log_message(f"Erreur lors de l'envoi de $pd : {response.status_code} - {response.text}", "error")
+
+    def envoyer_arl():
+        payload = {"content": "$arl"}
+        response = requests.post(url_send_message, headers=headers, json=payload)
+        if response.status_code == 200:
+            log_message("Commande $arl envoyée avec succès.", "success")
+        else:
+            log_message(f"Erreur lors de l'envoi de $arl : {response.status_code} - {response.text}", "error")
+
+    def extraire_nombre_en_stock(contenu):
+        match = re.search(r"\((\d+) en stock\)", contenu)
+        if match:
+            return int(match.group(1))
+        return 0
+
+    def recuperer_dernier_message():
+        response = requests.get(url_get_message, headers=headers)
+        if response.status_code == 200:
+            messages = response.json()
+            if messages:
+                return messages[0]
+        return None
+
+    envoyer_pd()
+    time.sleep(5)
+    dernier_message = recuperer_dernier_message()
+    if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
+        log_message("Message de Mudae détecté.", "info")
+        envoyer_arl()
+        time.sleep(2)
+        dernier_message_arl = recuperer_dernier_message()
+        if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
+            nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
+            if nombre_en_stock > 0:
+                log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
+                for _ in range(nombre_en_stock + 1):
+                    envoyer_message()
+                    time.sleep(1)
+            else:
+                log_message("Aucun pokéroll en stock trouvé.", "info")
+        else:
+            log_message("Aucun message de Mudae après $arl trouvé.", "error")
+    else:
+        log_message("Aucun message de Mudae trouvé après $pd.", "error")
+
+    pd_arl_running = False
+    log_message("Script $pd et $arl terminé.", "info")
+
+def lancer_pd_arl_intervalle():
+    while True:
+        envoyer_pd_arl()
+        time.sleep(10800)
+
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
@@ -305,5 +385,7 @@ menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Q
 tray_icon = pystray.Icon("MudaeBot", image, "Mudae Pokemon Automatiseur", menu)
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
+
+threading.Thread(target=lancer_pd_arl_intervalle, daemon=True).start()
 
 root.mainloop()
