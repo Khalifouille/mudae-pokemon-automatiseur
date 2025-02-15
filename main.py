@@ -242,7 +242,7 @@ main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 header_frame = ttk.Frame(main_frame)
 header_frame.pack(fill=tk.X, pady=5)
 
-title_label = ttk.Label(header_frame, text="Mudae Pokemon Automatiseur", font=("Segoe UI", 16, "bold"))
+title_label = ttk.Label(header_frame, text="MUDAE POKEMON AUTOMATISEUR", font=("Segoe UI", 16, "bold"))
 title_label.pack(side=tk.TOP, pady=10)
 
 input_frame = ttk.Frame(main_frame)
