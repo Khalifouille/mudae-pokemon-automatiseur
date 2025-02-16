@@ -4,3 +4,5 @@ build/main/localpycs/pyimod02_importers.pyc
 main.spec
 main.spec
 config.py
+/build
+script_testing.spec
