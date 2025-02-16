@@ -18,7 +18,7 @@ pygame.mixer.init()
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
-ICON_PATH = "mudae.ico"
+ICON_PATH = "F:\Mudae-pokemon\mudae.ico"
 SOUND_PATH = "music.mp3"
 
 CHANNEL_ID = "1084908479745114212"
