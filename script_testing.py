@@ -18,7 +18,7 @@ pygame.mixer.init()
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
-ICON_PATH = "F:\Mudae-pokemon\mudae.ico"
+ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
 
 CHANNEL_ID = "1084908479745114212"
@@ -388,9 +388,9 @@ def trouver_doublons(pokemon_liste):
 
 def extraire_nombre_en_stock(contenu):
     log_message(f"Contenu du message : {contenu}", "info")
-    match = re.search(r"\((\d+) en stock\)", contenu)
+    match = re.search(r"\(\*\*(\d+(?:\.\d+)?)\*\* en stock\)", contenu)
     if match:
-        nombre_en_stock = int(match.group(1))
+        nombre_en_stock = float(match.group(1))
         log_message(f"Nombre de pokérolls en stock extrait : {nombre_en_stock}", "info")
         return nombre_en_stock
     else:
@@ -479,8 +479,11 @@ channel_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 button_frame = ttk.Frame(main_frame)
 button_frame.pack(fill=tk.X, pady=10)
 
-start_button = ttk.Button(button_frame, text="Démarrer", command=toggle_bot, bootstyle="success")
+start_button = ttk.Button(button_frame, text="Démarrer la collecte", command=toggle_bot, bootstyle="success")
 start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
+pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
@@ -521,7 +524,5 @@ menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Q
 tray_icon = pystray.Icon("MudaeBot", image, "Mudae Pokemon Automatiseur", menu)
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
-
-threading.Thread(target=lancer_pd_arl_intervalle, daemon=True).start()
 
 root.mainloop()
