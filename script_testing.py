@@ -387,10 +387,15 @@ def trouver_doublons(pokemon_liste):
     return doublons
 
 def extraire_nombre_en_stock(contenu):
+    log_message(f"Contenu du message : {contenu}", "info")
     match = re.search(r"\((\d+) en stock\)", contenu)
     if match:
-        return int(match.group(1))
-    return 0
+        nombre_en_stock = int(match.group(1))
+        log_message(f"Nombre de pokérolls en stock extrait : {nombre_en_stock}", "info")
+        return nombre_en_stock
+    else:
+        log_message("Aucun nombre en stock trouvé dans le message.", "info")
+        return 0
 
 def executer_pd_arl():
     global pd_arl_running
@@ -416,6 +421,7 @@ def executer_pd_arl():
             time.sleep(2)
             dernier_message_arl = recuperer_dernier_message()
             if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
+                log_message(f"Message de Mudae détecté : {dernier_message_arl['content']}", "info")
                 nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
                 if nombre_en_stock > 0:
                     log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
