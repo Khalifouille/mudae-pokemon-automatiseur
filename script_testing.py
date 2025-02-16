@@ -414,7 +414,7 @@ def executer_pd_arl():
         doublons = trouver_doublons(tous_les_pokemon)
 
         if doublons:
-            log_message("\nPokémon en double :", "info")
+            log_message("Pokémon en double :", "info")
             for pokemon, count in doublons.items():
                 log_message(f"{pokemon} : {count} exemplaires", "info")
             envoyer_arl()
@@ -425,7 +425,7 @@ def executer_pd_arl():
                 nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
                 if nombre_en_stock > 0:
                     log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
-                    envoyer_p(nombre_en_stock + 1)
+                    envoyer_p(int(nombre_en_stock))
                 else:
                     log_message("Aucun pokéroll en stock trouvé.", "info")
             else:
