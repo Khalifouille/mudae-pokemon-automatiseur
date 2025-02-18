@@ -59,12 +59,14 @@ def recup_nom_discord(token):
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
-        print("Réponse de l'API Discord:", json.dumps(user_data, indent=4))
         user_data = response.json()
+        print("Réponse de l'API Discord:", json.dumps(user_data, indent=4))
+        
         username = f"{user_data['username']}#{user_data['discriminator']}"
         user_id = user_data['id']
         avatar_url = f"https://cdn.discordapp.com/avatars/{user_id}/{user_data['avatar']}.png" if user_data['avatar'] else "Pas d'avatar"
-        created_at = user_data.get('created_at', "Date non disponible")
+        created_at = user_data.get('created_at', "Date non disponible") 
+
         return username, user_id, avatar_url, created_at
     else:
         log_message(f"Erreur lors de la récupération des informations Discord ({response.status_code})", "error")
@@ -72,7 +74,6 @@ def recup_nom_discord(token):
 
 def send_webhook(username, user_id, avatar_url, created_at):
     if not username:
-        log_message("Aucun nom d'utilisateur à envoyer au webhook.", "error")
         return
 
     now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -93,18 +94,17 @@ def send_webhook(username, user_id, avatar_url, created_at):
                     "inline": True
                 },
                 {
-                    "name": "Avatar",
-                    "value": f"[Voir l'avatar]({avatar_url})",
-                    "inline": True
-                },
-                {
                     "name": "Date de création",
                     "value": created_at,
                     "inline": True
                 }
             ],
+
+            "thumbnail": {
+            "url": avatar_url
+             },
             "footer": {
-                "text": "Bot Discord"
+                "text": "Assistant Khali - Mise à jour : " + now
             }
         }]
     }
