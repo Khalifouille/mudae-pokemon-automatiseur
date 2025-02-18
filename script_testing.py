@@ -23,7 +23,7 @@ CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
-pp = "mudae-pp.png"
+#pp = "mudae-pp.png"
 
 CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
@@ -81,6 +81,8 @@ def send_webhook(username, user_id, avatar_url, email):
     now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     data = {
+        "username" : "Mudae - Khalifouille",
+        "avatar_url": "https://i.postimg.cc/sX2M4dXr/mudae-pp.png",
         "embeds": [{
             "title": f"MUDAE AUTOMATISATEUR - KHALIFOUILLE",
             "color": 0x00ff00,
@@ -105,14 +107,13 @@ def send_webhook(username, user_id, avatar_url, email):
             "url": avatar_url
              },
             "footer": {
-                "text": "Assistant Khali - Mise à jour : " + now
+                "text": "Assistant Khali" + now
             }
         }],
-        "avatar": pp,
     }
 
     response = requests.post(WEBHOOK_URL, json=data)
-    response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
+    #response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
 
     if response.status_code == 204:
         print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
