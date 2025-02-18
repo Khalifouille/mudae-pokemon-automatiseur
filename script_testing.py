@@ -450,7 +450,15 @@ root.geometry("600x597")
 root.minsize(500, 450)
 
 if os.path.exists(ICON_PATH):
-    root.iconbitmap(ICON_PATH)
+    tray_image = Image.open(ICON_PATH)
+else:
+    tray_image = Image.new("RGBA", (64, 64), (255, 255, 255, 0))
+
+image = Image.open(ICON_PATH)
+menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
+tray_menu = (pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
+tray_icon = pystray.Icon("MudaeBot", tray_image, "MudaeBot", tray_menu)
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 main_frame = ttk.Frame(root)
 main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -519,10 +527,6 @@ log_text.config(yscrollcommand=scrollbar.set)
 charger_config()
 check_for_updates()
 
-image = Image.open(ICON_PATH)
-menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
-tray_icon = pystray.Icon("MudaeBot", image, "Mudae Pokemon Automatiseur", menu)
-
-root.protocol("WM_DELETE_WINDOW", on_closing)
+threading.Thread(target=tray_icon.run, daemon=True).start()
 
 root.mainloop()
