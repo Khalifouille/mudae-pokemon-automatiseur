@@ -12,6 +12,9 @@ from ttkbootstrap import Style
 import pystray
 from PIL import Image
 from collections import defaultdict
+import datetime
+from config import WEBHOOK_URL
+
 
 pygame.mixer.init()
 
@@ -45,6 +48,51 @@ def log_message(message, level="info"):
     log_text.see(tk.END)
     with open(LOG_FILE, "a") as log_file:
         log_file.write(f"[{tag}] {message}\n")
+
+def recup_nom_discord(token):
+    url = "https://discord.com/api/v9/users/@me"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        user_data = response.json()
+        username = f"{user_data['username']}#{user_data['discriminator']}"
+        log_message(f"Utilisateur Discord détecté : {username}", "success")
+        return username
+    else:
+        log_message(f"Impossible de récupérer l'utilisateur Discord ({response.status_code})", "error")
+        return None
+
+def send_webhook(username):
+    if not username:
+        log_message("Aucun nom d'utilisateur à envoyer au webhook.", "error")
+        return
+
+    now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    data = {
+        "embeds": [
+            {
+                "title": "🖥️ Script lancé",
+                "description": f"**Utilisateur :** `{username}`",
+                "color": 0x00FF00,
+                "footer": {
+                    "text": f"Envoyé le {now}"
+                }
+            }
+        ]
+    }
+    
+    response = requests.post(WEBHOOK_URL, json=data)
+    
+    if response.status_code == 204:
+        log_message("Nom d'utilisateur envoyé avec succès au webhook.", "success")
+    else:
+        log_message(f"Erreur lors de l'envoi au webhook : {response.status_code}", "error")
 
 def check_for_updates():
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -203,13 +251,18 @@ def toggle_bot():
         log_message("Bot arrêté.", "info")
         start_button.config(text="Démarrer", bootstyle="success")
     else:
-        if not token_entry.get() or not channel_entry.get():
+        token = token_entry.get()
+        if not token or not channel_entry.get():
             messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
             return
+
         running = True
-        sauvegarder_config()
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
+        username = recup_nom_discord(token)
+        send_webhook(username)
+
+
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
