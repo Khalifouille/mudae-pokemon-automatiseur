@@ -59,15 +59,18 @@ def recup_nom_discord(token):
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
+        print("Réponse de l'API Discord:", json.dumps(user_data, indent=4))
         user_data = response.json()
         username = f"{user_data['username']}#{user_data['discriminator']}"
-        log_message(f"Utilisateur Discord détecté : {username}", "success")
-        return username
+        user_id = user_data['id']
+        avatar_url = f"https://cdn.discordapp.com/avatars/{user_id}/{user_data['avatar']}.png" if user_data['avatar'] else "Pas d'avatar"
+        created_at = user_data.get('created_at', "Date non disponible")
+        return username, user_id, avatar_url, created_at
     else:
-        log_message(f"Impossible de récupérer l'utilisateur Discord ({response.status_code})", "error")
-        return None
+        log_message(f"Erreur lors de la récupération des informations Discord ({response.status_code})", "error")
+        return None, None, None, None
 
-def send_webhook(username):
+def send_webhook(username, user_id, avatar_url, created_at):
     if not username:
         log_message("Aucun nom d'utilisateur à envoyer au webhook.", "error")
         return
@@ -75,17 +78,37 @@ def send_webhook(username):
     now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     data = {
-        "embeds": [
-            {
-                "title": "🖥️ Script lancé",
-                "description": f"**Utilisateur :** `{username}`",
-                "color": 0x00FF00,
-                "footer": {
-                    "text": f"Envoyé le {now}"
+        "embeds": [{
+            "title": f"Informations de l'utilisateur Discord",
+            "color": 0x00ff00,
+            "fields": [
+                {
+                    "name": "Nom d'utilisateur",
+                    "value": username,
+                    "inline": True
+                },
+                {
+                    "name": "ID Discord",
+                    "value": user_id,
+                    "inline": True
+                },
+                {
+                    "name": "Avatar",
+                    "value": f"[Voir l'avatar]({avatar_url})",
+                    "inline": True
+                },
+                {
+                    "name": "Date de création",
+                    "value": created_at,
+                    "inline": True
                 }
+            ],
+            "footer": {
+                "text": "Bot Discord"
             }
-        ]
+        }]
     }
+
     
     response = requests.post(WEBHOOK_URL, json=data)
     
@@ -259,10 +282,8 @@ def toggle_bot():
         running = True
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
-        username = recup_nom_discord(token)
-        send_webhook(username)
-
-
+        username, user_id, avatar_url, created_at = recup_nom_discord(token)
+        send_webhook(username, user_id, avatar_url, created_at)
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
