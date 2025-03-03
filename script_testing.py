@@ -316,19 +316,31 @@ def envoyer_pd():
     else:
         log_message(f"Erreur lors de l'envoi de $pd : {response.status_code} - {response.text}", "error")
 
-def envoyer_arl():
+def envoyer_arl(pokemon_list):
     headers = {
         "Authorization": token_entry.get(),
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
-    payload = {"content": "$arl"}
-    response = requests.post(url_send_message, headers=headers, json=payload)
-    if response.status_code == 200:
-        log_message("Commande $arl envoyée avec succès.", "success")
-    else:
-        log_message(f"Erreur lors de l'envoi de $arl : {response.status_code} - {response.text}", "error")
+    
+    for pokemon, count in pokemon_list.items():
+        rarity = POKEMON_RARITY.get(pokemon, "Unknown")
+        if rarity == "Unknown":
+            log_message(f"Rareté inconnue pour {pokemon}.", "error")
+            continue
+        
+        if rarity >= 4:
+            payload = {"content": f"$release {pokemon}"}
+        else:
+            payload = {"content": "$arl"}
+        
+        response = requests.post(url_send_message, headers=headers, json=payload)
+        if response.status_code == 200:
+            log_message(f"Commande $release envoyée avec succès pour {pokemon}.", "success")
+        else:
+            log_message(f"Erreur lors de l'envoi de $release pour {pokemon} : {response.status_code} - {response.text}", "error")
+        time.sleep(1)
 
 def envoyer_p(nombre):
     headers = {
@@ -496,7 +508,7 @@ def executer_pd_arl():
             log_message("Pokémon en double :", "info")
             for pokemon, count in doublons.items():
                 log_message(f"{pokemon} : {count} exemplaires", "info")
-            envoyer_arl()
+            envoyer_arl(doublons)
             time.sleep(2)
             dernier_message_arl = recuperer_dernier_message()
             if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
