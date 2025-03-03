@@ -29,7 +29,7 @@ CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
-CURRENT_VERSION = "1.0.1"
+CURRENT_VERSION = "1.0.2"
 
 running = False
 test_mode = False
