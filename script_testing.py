@@ -467,6 +467,9 @@ def extraire_nombre_en_stock(contenu):
         log_message("Aucun nombre en stock trouvé dans le message.", "info")
         return 0
 
+with open("data/pokemon_rarity.json", "r") as file:
+    POKEMON_RARITY = json.load(file)
+
 def executer_pd_arl():
     global pd_arl_running
     if pd_arl_running:
@@ -482,6 +485,12 @@ def executer_pd_arl():
         log_message("Message de Mudae détecté.", "info")
         tous_les_pokemon = recuperer_toutes_les_pages(dernier_message["id"])
         doublons = trouver_doublons(tous_les_pokemon)
+
+        if tous_les_pokemon:
+            log_message("Pokémon détectés :", "info")
+            for pokemon, count in tous_les_pokemon:
+                rarity = POKEMON_RARITY.get(pokemon, "Unknown")
+                log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
 
         if doublons:
             log_message("Pokémon en double :", "info")
