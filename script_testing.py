@@ -15,7 +15,6 @@ from collections import defaultdict
 import datetime
 from config import WEBHOOK_URL
 
-
 pygame.mixer.init()
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
@@ -96,11 +95,6 @@ def send_webhook(username, user_id, avatar_url, email):
                     "name": "ID Discord",
                     "value": user_id,
                     "inline": True
-                },
-                {
-                    "name": "E-mail",
-                    "value": email,
-                    "inline": True
                 }
             ],
             "thumbnail": {
@@ -113,7 +107,6 @@ def send_webhook(username, user_id, avatar_url, email):
     }
 
     response = requests.post(WEBHOOK_URL, json=data)
-    #response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
 
     if response.status_code == 204:
         print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
