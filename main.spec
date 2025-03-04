@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['mudae.ico'],
+    icon=['F:\\Mudae-pokemon\\mudae.ico'],
 )
