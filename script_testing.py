@@ -14,6 +14,7 @@ from PIL import Image
 from collections import defaultdict
 import datetime
 from config import WEBHOOK_URL
+import random
 
 pygame.mixer.init()
 
@@ -28,7 +29,7 @@ CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
-CURRENT_VERSION = "1.0.2"
+CURRENT_VERSION = "1.0.4"
 
 running = False
 test_mode = False
@@ -528,6 +529,36 @@ def executer_pd_arl():
 
     pd_arl_running = False
     log_message("Script $pd et $arl terminé.", "info")
+
+def envoyer_sh(pokemon_list):
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
+    
+    payload = {"content": "$sh"}
+    response = requests.post(url_send_message, headers=headers, json=payload)
+    if response.status_code == 200:
+        log_message("Commande $sh envoyée avec succès.", "success")
+        time.sleep(2)
+        dernier_message = recuperer_dernier_message()
+        if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
+            if "Vous n'êtes pas en train de chasser un shiny." in dernier_message["content"]:
+                random_pokemon = random.choice(list(pokemon_list.keys()))
+                payload = {"content": f"$sh {random_pokemon}"}
+                response = requests.post(url_send_message, headers=headers, json=payload)
+                if response.status_code == 200:
+                    log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
+                else:
+                    log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
+            else:
+                log_message("Vous êtes déjà en train de chasser un shiny.", "info")
+        else:
+            log_message("Aucun message de Mudae trouvé après $sh.", "error")
+    else:
+        log_message(f"Erreur lors de l'envoi de $sh : {response.status_code} - {response.text}", "error")
 
 def lancer_pd_arl_intervalle():
     while True:
