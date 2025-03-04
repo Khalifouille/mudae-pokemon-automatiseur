@@ -524,8 +524,9 @@ def executer_pd_arl():
                 log_message("Aucun message de Mudae après $arl trouvé.", "error")
         else:
             log_message("Aucun Pokémon en double trouvé.", "info")
-
-        envoyer_sh(tous_les_pokemon)
+            
+        pokemon_dict = {pokemon: count for pokemon, count in tous_les_pokemon}
+        envoyer_sh(pokemon_dict)
     else:
         log_message("Aucun message de Mudae trouvé après $pd.", "error")
 
