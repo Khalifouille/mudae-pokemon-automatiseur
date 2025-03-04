@@ -524,7 +524,7 @@ def executer_pd_arl():
                 log_message("Aucun message de Mudae après $arl trouvé.", "error")
         else:
             log_message("Aucun Pokémon en double trouvé.", "info")
-            
+
         envoyer_sh(tous_les_pokemon)
     else:
         log_message("Aucun message de Mudae trouvé après $pd.", "error")
@@ -565,7 +565,7 @@ def envoyer_sh(pokemon_list):
 def lancer_pd_arl_intervalle():
     while True:
         executer_pd_arl()
-        time.sleep(10800)
+        time.sleep(3600)
 
 style = Style(theme="darkly")
 root = style.master
