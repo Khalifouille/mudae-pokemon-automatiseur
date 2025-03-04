@@ -587,60 +587,6 @@ def lancer_pd_arl_intervalle():
         executer_pd_arl()
         time.sleep(3600)
 
-def executer_collecte_complete():
-    global pd_arl_running
-    if pd_arl_running:
-        return
-
-    pd_arl_running = True
-    log_message("Démarrage du script de collecte complète.", "info")
-
-    envoyer_message()
-    time.sleep(5)
-
-    envoyer_pd()
-    time.sleep(5)
-    dernier_message = recuperer_dernier_message()
-    if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-        log_message("Message de Mudae détecté.", "info")
-        tous_les_pokemon = recuperer_toutes_les_pages(dernier_message["id"])
-        doublons = trouver_doublons(tous_les_pokemon)
-
-        if tous_les_pokemon:
-            log_message("Pokémon détectés :", "info")
-            for pokemon, count in tous_les_pokemon:
-                rarity = POKEMON_RARITY.get(pokemon, "Unknown")
-                log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
-
-        if doublons:
-            log_message("Pokémon en double :", "info")
-            for pokemon, count in doublons.items():
-                log_message(f"{pokemon} : {count} exemplaires", "info")
-            envoyer_arl(doublons)
-            time.sleep(2)
-            dernier_message_arl = recuperer_dernier_message()
-            if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
-                log_message(f"Message de Mudae détecté : {dernier_message_arl['content']}", "info")
-                nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
-                if nombre_en_stock > 0:
-                    log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
-                    envoyer_p(int(nombre_en_stock))
-                else:
-                    log_message("Aucun pokéroll en stock trouvé.", "info")
-            else:
-                log_message("Aucun message de Mudae après $arl trouvé.", "error")
-        else:
-            log_message("Aucun Pokémon en double trouvé.", "info")
-
-        pokemon_dict = {pokemon: count for pokemon, count in tous_les_pokemon}
-        envoyer_sh(pokemon_dict)
-    else:
-        log_message("Aucun message de Mudae trouvé après $pd.", "error")
-
-    pd_arl_running = False
-    log_message("Script de collecte complète terminé.", "info")
-
-
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
@@ -685,8 +631,11 @@ channel_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 button_frame = ttk.Frame(main_frame)
 button_frame.pack(fill=tk.X, pady=10)
 
-start_button = ttk.Button(button_frame, text="Démarrer la collecte complète", command=executer_collecte_complete, bootstyle="success")
+start_button = ttk.Button(button_frame, text="Démarrer la collecte", command=toggle_bot, bootstyle="success")
 start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
+pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
