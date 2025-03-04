@@ -524,6 +524,8 @@ def executer_pd_arl():
                 log_message("Aucun message de Mudae après $arl trouvé.", "error")
         else:
             log_message("Aucun Pokémon en double trouvé.", "info")
+            
+        envoyer_sh(tous_les_pokemon)
     else:
         log_message("Aucun message de Mudae trouvé après $pd.", "error")
 
@@ -537,7 +539,7 @@ def envoyer_sh(pokemon_list):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
-    
+
     payload = {"content": "$sh"}
     response = requests.post(url_send_message, headers=headers, json=payload)
     if response.status_code == 200:
