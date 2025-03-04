@@ -554,6 +554,11 @@ def envoyer_sh(pokemon_list):
                 response = requests.post(url_send_message, headers=headers, json=payload)
                 if response.status_code == 200:
                     log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
+                    time.sleep(2)
+                    dernier_message = recuperer_dernier_message()
+                    if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
+                        if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
+                            envoyer_confirmation_sh()
                 else:
                     log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
             else:
@@ -562,6 +567,20 @@ def envoyer_sh(pokemon_list):
             log_message("Aucun message de Mudae trouvé après $sh.", "error")
     else:
         log_message(f"Erreur lors de l'envoi de $sh : {response.status_code} - {response.text}", "error")
+
+def envoyer_confirmation_sh():
+    headers = {
+        "Authorization": token_entry.get(),
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
+    payload = {"content": "o"}
+    response = requests.post(url_send_message, headers=headers, json=payload)
+    if response.status_code == 200:
+        log_message("Confirmation de chasse shiny envoyée avec succès.", "success")
+    else:
+        log_message(f"Erreur lors de l'envoi de la confirmation de chasse shiny : {response.status_code} - {response.text}", "error")
 
 def lancer_pd_arl_intervalle():
     while True:
