@@ -15,7 +15,6 @@ from collections import defaultdict
 import datetime
 from config import WEBHOOK_URL
 
-
 pygame.mixer.init()
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
@@ -29,7 +28,7 @@ CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
-CURRENT_VERSION = "1.0.2"
+CURRENT_VERSION = "1.0.3"
 
 running = False
 test_mode = False
@@ -96,11 +95,6 @@ def send_webhook(username, user_id, avatar_url, email):
                     "name": "ID Discord",
                     "value": user_id,
                     "inline": True
-                },
-                {
-                    "name": "E-mail",
-                    "value": email,
-                    "inline": True
                 }
             ],
             "thumbnail": {
@@ -113,7 +107,6 @@ def send_webhook(username, user_id, avatar_url, email):
     }
 
     response = requests.post(WEBHOOK_URL, json=data)
-    #response = requests.patch(f"https://discord.com/api/v9/webhooks/{WEBHOOK_URL.split('/')[-2]}/{WEBHOOK_URL.split('/')[-1]}", json=data)
 
     if response.status_code == 204:
         print("Nom d'utilisateur envoyé avec succès au webhook.", "success")
@@ -323,19 +316,31 @@ def envoyer_pd():
     else:
         log_message(f"Erreur lors de l'envoi de $pd : {response.status_code} - {response.text}", "error")
 
-def envoyer_arl():
+def envoyer_arl(pokemon_list):
     headers = {
         "Authorization": token_entry.get(),
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
-    payload = {"content": "$arl"}
-    response = requests.post(url_send_message, headers=headers, json=payload)
-    if response.status_code == 200:
-        log_message("Commande $arl envoyée avec succès.", "success")
-    else:
-        log_message(f"Erreur lors de l'envoi de $arl : {response.status_code} - {response.text}", "error")
+    
+    for pokemon, count in pokemon_list.items():
+        rarity = POKEMON_RARITY.get(pokemon, "Unknown")
+        if rarity == "Unknown":
+            log_message(f"Rareté inconnue pour {pokemon}.", "error")
+            continue
+        
+        if rarity >= 4:
+            payload = {"content": f"$release {pokemon}"}
+        else:
+            payload = {"content": "$arl"}
+        
+        response = requests.post(url_send_message, headers=headers, json=payload)
+        if response.status_code == 200:
+            log_message(f"Commande $release envoyée avec succès pour {pokemon}.", "success")
+        else:
+            log_message(f"Erreur lors de l'envoi de $release pour {pokemon} : {response.status_code} - {response.text}", "error")
+        time.sleep(1)
 
 def envoyer_p(nombre):
     headers = {
@@ -474,6 +479,9 @@ def extraire_nombre_en_stock(contenu):
         log_message("Aucun nombre en stock trouvé dans le message.", "info")
         return 0
 
+with open("data/pokemon_rarity.json", "r") as file:
+    POKEMON_RARITY = json.load(file)
+
 def executer_pd_arl():
     global pd_arl_running
     if pd_arl_running:
@@ -490,11 +498,17 @@ def executer_pd_arl():
         tous_les_pokemon = recuperer_toutes_les_pages(dernier_message["id"])
         doublons = trouver_doublons(tous_les_pokemon)
 
+        if tous_les_pokemon:
+            log_message("Pokémon détectés :", "info")
+            for pokemon, count in tous_les_pokemon:
+                rarity = POKEMON_RARITY.get(pokemon, "Unknown")
+                log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
+
         if doublons:
             log_message("Pokémon en double :", "info")
             for pokemon, count in doublons.items():
                 log_message(f"{pokemon} : {count} exemplaires", "info")
-            envoyer_arl()
+            envoyer_arl(doublons)
             time.sleep(2)
             dernier_message_arl = recuperer_dernier_message()
             if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
