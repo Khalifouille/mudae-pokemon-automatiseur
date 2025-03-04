@@ -685,11 +685,8 @@ channel_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 button_frame = ttk.Frame(main_frame)
 button_frame.pack(fill=tk.X, pady=10)
 
-start_button = ttk.Button(button_frame, text="Démarrer la collecte", command=toggle_bot, bootstyle="success")
+start_button = ttk.Button(button_frame, text="Démarrer la collecte complète", command=executer_collecte_complete, bootstyle="success")
 start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-
-pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
-pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
