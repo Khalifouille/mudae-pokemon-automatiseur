@@ -41,6 +41,7 @@ if not os.path.exists(APPDATA_DIR):
 
 def log_message(message, level="info"):
     tag = level.upper()
+    log_text.config(state=tk.NORMAL)  
     if level == "error":
         log_text.insert(tk.END, f"[{tag}] {message}\n", "error")
     elif level == "success":
@@ -48,6 +49,7 @@ def log_message(message, level="info"):
     else:
         log_text.insert(tk.END, f"[{tag}] {message}\n", "info")
     log_text.see(tk.END)
+    log_text.config(state=tk.DISABLED) 
     with open(LOG_FILE, "a", encoding="utf-8") as log_file:
         log_file.write(f"[{tag}] {message}\n")
 
