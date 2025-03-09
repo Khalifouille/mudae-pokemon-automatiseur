@@ -587,20 +587,24 @@ def lancer_pd_arl_intervalle():
         executer_pd_arl()
         time.sleep(3600)
 
+stop_event = threading.Event()
+
 def executer_collecte_complete():
     global pd_arl_running
     if pd_arl_running:
         pd_arl_running = False
+        stop_event.set()
         log_message("Arrêt de la collecte complète.", "info")
         start2_button.config(text="Démarrer la collecte complète", bootstyle="warning")
         return
 
     pd_arl_running = True
+    stop_event.clear()  
     log_message("Démarrage du script de collecte complète.", "info")
     start2_button.config(text="Arrêter", bootstyle="danger")
 
     def cycle():
-        while pd_arl_running:
+        while pd_arl_running and not stop_event.is_set():
             envoyer_message()
             time.sleep(5)
 
@@ -643,7 +647,7 @@ def executer_collecte_complete():
             else:
                 log_message("Aucun message de Mudae trouvé après $pd.", "error")
 
-            if not pd_arl_running:
+            if not pd_arl_running or stop_event.is_set():
                 break
 
             log_message("Cycle de collecte complet terminé. Attente de 120 minutes avant le prochain cycle.", "info")
