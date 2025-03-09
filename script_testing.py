@@ -696,6 +696,19 @@ def executer_collecte_complete():
 
     threading.Thread(target=cycle, daemon=True).start()
 
+def show_tooltip(event):
+    tooltip = tk.Toplevel()
+    tooltip.wm_overrideredirect(True)
+    tooltip.wm_geometry(f"+{event.x_root + 20}+{event.y_root + 10}")
+    label = ttk.Label(tooltip, text="Comment avoir son token", background="Black", relief="solid", borderwidth=1)
+    label.pack()
+    event.widget.tooltip = tooltip
+
+def hide_tooltip(event):
+    if hasattr(event.widget, 'tooltip'):
+        event.widget.tooltip.destroy()
+        del event.widget.tooltip
+
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
@@ -732,6 +745,8 @@ token_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 info_label = ttk.Label(input_frame, text="ℹ️", foreground="blue", cursor="hand2")
 info_label.grid(row=0, column=2, padx=5)
 info_label.bind("<Button-1>", ouvrir_lien)
+info_label.bind("<Enter>", show_tooltip)
+info_label.bind("<Leave>", hide_tooltip)
 
 ttk.Label(input_frame, text="Channel ID :").grid(row=1, column=0, padx=5, pady=5, sticky="w")
 channel_entry = ttk.Entry(input_frame, width=50)
