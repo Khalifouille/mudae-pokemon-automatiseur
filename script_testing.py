@@ -36,6 +36,9 @@ running = False
 test_mode = False
 pd_arl_running = False
 
+def simulate_error():
+    log_message("Ceci est un message d'erreur simulé pour les tests.", "error")
+
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
 
@@ -782,6 +785,9 @@ pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 start2_button = ttk.Button(button_frame, text="Collecte complète (TEST)", command=executer_collecte_complete, bootstyle="warning", state="disabled")
 start2_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
+simulate_error_button.pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
