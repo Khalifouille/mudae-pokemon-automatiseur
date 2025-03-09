@@ -704,7 +704,7 @@ start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
 pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-start2_button = ttk.Button(button_frame, text="Collecte complète (TEST)", command=executer_collecte_complete, bootstyle="warning")
+start2_button = ttk.Button(button_frame, text="Collecte complète (TEST)", command=executer_collecte_complete, bootstyle="warning", state="disabled")
 start2_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
