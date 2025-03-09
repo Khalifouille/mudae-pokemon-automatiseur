@@ -553,7 +553,7 @@ def envoyer_sh(pokemon_list):
             log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
             if "Votre chaîne est de" in dernier_message["content"]:
                 log_message("Détection de la chaîne dans le message.", "info")
-                chaine_match = re.search(r"Votre chaîne est de (\d+)", dernier_message["content"])
+                chaine_match = re.search(r"Votre chaîne est de \*\*(\d+)\*\*", dernier_message["content"])
                 if chaine_match:
                     log_message(f"Chaîne détectée : {chaine_match.group(1)}", "info")
                     if int(chaine_match.group(1)) > 0:
@@ -563,22 +563,30 @@ def envoyer_sh(pokemon_list):
                         if response.status_code == 200:
                             log_message("Commande $sh none envoyée avec succès.", "success")
                             time.sleep(2)
-                            random_pokemon = random.choice(list(pokemon_list.keys()))
-                            log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
-                            payload = {"content": f"$sh {random_pokemon}"}
-                            response = requests.post(url_send_message, headers=headers, json=payload)
-                            if response.status_code == 200:
-                                log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
-                                time.sleep(2)
-                                dernier_message = recuperer_dernier_message()
-                                if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-                                    log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-                                    if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
-                                        envoyer_confirmation_sh()
-                            else:
-                                log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
+                            dernier_message = recuperer_dernier_message()
+                            if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
+                                log_message(f"Message de confirmation de Mudae détecté : {dernier_message['content']}", "info")
+                                if "Votre chaîne a été réinitialisée" in dernier_message["content"]:
+                                    random_pokemon = random.choice(list(pokemon_list.keys()))
+                                    log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
+                                    payload = {"content": f"$sh {random_pokemon}"}
+                                    response = requests.post(url_send_message, headers=headers, json=payload)
+                                    if response.status_code == 200:
+                                        log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
+                                        time.sleep(2)
+                                        dernier_message = recuperer_dernier_message()
+                                        if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
+                                            log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
+                                            if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
+                                                envoyer_confirmation_sh()
+                                    else:
+                                        log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
+                                else:
+                                    log_message("La chaîne n'a pas été réinitialisée.", "error")
                         else:
                             log_message(f"Erreur lors de l'envoi de $sh none : {response.status_code} - {response.text}", "error")
+                    else:
+                        log_message("La chaîne est de 0, pas besoin d'envoyer $sh none.", "info")
             elif "Vous n'êtes pas en train de chasser un shiny." in dernier_message["content"]:
                 random_pokemon = random.choice(list(pokemon_list.keys()))
                 log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
