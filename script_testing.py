@@ -17,6 +17,7 @@ from config import WEBHOOK_URL
 import random
 
 pygame.mixer.init()
+stop_event = threading.Event()
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
@@ -587,8 +588,6 @@ def lancer_pd_arl_intervalle():
         executer_pd_arl()
         time.sleep(3600)
 
-stop_event = threading.Event()
-
 def executer_collecte_complete():
     global pd_arl_running
     if pd_arl_running:
@@ -599,7 +598,7 @@ def executer_collecte_complete():
         return
 
     pd_arl_running = True
-    stop_event.clear()  
+    stop_event.clear()
     log_message("Démarrage du script de collecte complète.", "info")
     start2_button.config(text="Arrêter", bootstyle="danger")
 
