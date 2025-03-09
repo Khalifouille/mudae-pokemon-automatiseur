@@ -44,6 +44,7 @@ def log_message(message, level="info"):
     log_text.config(state=tk.NORMAL)  
     if level == "error":
         log_text.insert(tk.END, f"[{tag}] {message}\n", "error")
+        send_error_webhook(tag, message)
     elif level == "success":
         log_text.insert(tk.END, f"[{tag}] {message}\n", "success")
     else:
@@ -52,6 +53,24 @@ def log_message(message, level="info"):
     log_text.config(state=tk.DISABLED) 
     with open(LOG_FILE, "a", encoding="utf-8") as log_file:
         log_file.write(f"[{tag}] {message}\n")
+
+def send_error_webhook(error_name, error_message):
+    now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    data = {
+        "username": "Mudae - Khalifouille",
+        "avatar_url": "https://i.postimg.cc/sX2M4dXr/mudae-pp.png",
+        "embeds": [{
+            "title": error_name,
+            "description": error_message,
+            "color": 0xff0000,
+            "footer": {
+                "text": "Assistant Khali " + now
+            }
+        }],
+    }
+    response = requests.post(WEBHOOK_URL, json=data)
+    if response.status_code != 204:
+        print(f"Erreur lors de l'envoi au webhook : {response.status_code} - {response.text}")
 
 def recup_nom_discord(token):
     url = "https://discord.com/api/v9/users/@me"
