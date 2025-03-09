@@ -590,10 +590,14 @@ def lancer_pd_arl_intervalle():
 def executer_collecte_complete():
     global pd_arl_running
     if pd_arl_running:
+        pd_arl_running = False
+        log_message("Arrêt de la collecte complète.", "info")
+        start2_button.config(text="Démarrer la collecte complète", bootstyle="success")
         return
 
     pd_arl_running = True
     log_message("Démarrage du script de collecte complète.", "info")
+    start2_button.config(text="Arrêter", bootstyle="danger")
 
     def cycle():
         while pd_arl_running:
