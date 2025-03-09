@@ -592,7 +592,7 @@ def executer_collecte_complete():
     if pd_arl_running:
         pd_arl_running = False
         log_message("Arrêt de la collecte complète.", "info")
-        start2_button.config(text="Démarrer la collecte complète", bootstyle="success")
+        start2_button.config(text="Démarrer la collecte complète", bootstyle="warning")
         return
 
     pd_arl_running = True
@@ -642,6 +642,9 @@ def executer_collecte_complete():
                 envoyer_sh(pokemon_dict)
             else:
                 log_message("Aucun message de Mudae trouvé après $pd.", "error")
+
+            if not pd_arl_running:
+                break
 
             log_message("Cycle de collecte complet terminé. Attente de 120 minutes avant le prochain cycle.", "info")
             afficher_compte_a_rebours(120)
@@ -698,7 +701,7 @@ start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
 pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-start2_button = ttk.Button(button_frame, text="Démarrer la collecte complète", command=executer_collecte_complete, bootstyle="success")
+start2_button = ttk.Button(button_frame, text="Collecte complète (TEST)", command=executer_collecte_complete, bootstyle="warning")
 start2_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
