@@ -782,6 +782,39 @@ def recup_infos_serveur(token, guild_id):
         log_message(f"Erreur lors de la récupération des informations du serveur ({response.status_code})", "error")
         return None, None, None
 
+def afficher_message_bienvenue():
+    token = token_entry.get()
+    if not token:
+        messagebox.showerror("Erreur", "Veuillez entrer un token valide.")
+        return
+
+    username, user_id, avatar_url, email = recup_infos_utilisateur(token)
+    guild_name, guild_id, member_count = recup_infos_serveur(token, GUILD_ID)
+
+    if username and guild_name:
+        message_bienvenue = f"Salut {username} ! Tu es actuellement sur {guild_name}."
+        bienvenue_label.config(text=message_bienvenue)
+    else:
+        bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
+
+def toggle_bot():
+    global running
+    if running:
+        running = False
+        log_message("Bot arrêté.", "info")
+        start_button.config(text="Démarrer", bootstyle="success")
+    else:
+        token = token_entry.get()
+        if not token or not channel_entry.get():
+            messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
+            return
+
+        running = True
+        log_message("Bot démarré.", "info")
+        start_button.config(text="Arrêter", bootstyle="danger")
+        afficher_message_bienvenue()
+        threading.Thread(target=envoyer_message, daemon=True).start()
+
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
@@ -846,6 +879,9 @@ test_mode_checkbox.pack(pady=5)
 
 simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
 simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
+
+bienvenue_label = ttk.Label(main_frame, text="", font=("Segoe UI", 12))
+bienvenue_label.pack(pady=5)
 
 countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
 countdown_label.pack(pady=5)
