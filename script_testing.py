@@ -517,6 +517,13 @@ def extraire_nombre_en_stock(contenu):
 with open("data/pokemon_rarity.json", "r") as file:
     POKEMON_RARITY = json.load(file)
 
+def afficher_nombre_pokemon():
+    global pokemon_count
+    if pokemon_count is not None:
+        nombre_pokemon_label.config(text=f"Nombre de Pokémon : {pokemon_count}")
+    else:
+        nombre_pokemon_label.config(text="Nombre de Pokémon : Non disponible")
+
 def sauvegarder_pokemon_count(count):
     with open("pokemon_count.json", "w") as file:
         json.dump({"pokemon_count": count}, file)
@@ -880,6 +887,9 @@ simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
 bienvenue_label = ttk.Label(main_frame, text="", font=("Segoe UI", 12))
 bienvenue_label.pack(pady=5)
 
+nombre_pokemon_label = ttk.Label(main_frame, text="Nombre de Pokémon : Non disponible", font=("Segoe UI", 12))
+nombre_pokemon_label.pack(pady=5)
+
 countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
 countdown_label.pack(pady=5)
 
@@ -906,6 +916,8 @@ log_text.config(yscrollcommand=scrollbar.set)
 
 charger_config()
 check_for_updates()
+charger_pokemon_count()
+afficher_nombre_pokemon()
 
 threading.Thread(target=tray_icon.run, daemon=True).start()
 
