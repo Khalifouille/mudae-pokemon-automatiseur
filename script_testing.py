@@ -817,7 +817,7 @@ def afficher_message_bienvenue():
     if username and guild_name:
         message_bienvenue = f"Salut {username} ! Tu farme sur {guild_name}."
         if pokemon_count is not None:
-            message_bienvenue += f" Nombre de Pokémon : {pokemon_count}"
+            message_bienvenue += f" Pokémon en stock: {pokemon_count}"
         bienvenue_label.config(text=message_bienvenue)
     else:
         bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
@@ -890,7 +890,7 @@ simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
 bienvenue_label = ttk.Label(main_frame, text="Salut !", font=("Segoe UI", 12))
 bienvenue_label.pack(pady=5)
 
-nombre_pokemon_label = ttk.Label(main_frame, text="Nombre de Pokémon : Non disponible", font=("Segoe UI", 12))
+nombre_pokemon_label = ttk.Label(main_frame, text="Pokémon en stock : Non disponible", font=("Segoe UI", 12))
 nombre_pokemon_label.pack(pady=5)
 
 countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
