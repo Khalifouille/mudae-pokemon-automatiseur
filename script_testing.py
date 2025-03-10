@@ -24,6 +24,8 @@ CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
+DISCORD_API_URL = "https://discord.com/api/v9"
+MUDAE_BOT_ID = "432610292342587392"
 #pp = "mudae-pp.png"
 
 CHANNEL_ID = "1084908479745114212"
@@ -44,7 +46,7 @@ if not os.path.exists(APPDATA_DIR):
 
 def log_message(message, level="info"):
     tag = level.upper()
-    log_text.config(state=tk.NORMAL)  
+    log_text.config(state=tk.NORMAL)
     if level == "error":
         log_text.insert(tk.END, f"[{tag}] {message}\n", "error")
         send_error_webhook(tag, message)
@@ -53,7 +55,7 @@ def log_message(message, level="info"):
     else:
         log_text.insert(tk.END, f"[{tag}] {message}\n", "info")
     log_text.see(tk.END)
-    log_text.config(state=tk.DISABLED) 
+    log_text.config(state=tk.DISABLED)
     with open(LOG_FILE, "a", encoding="utf-8") as log_file:
         log_file.write(f"[{tag}] {message}\n")
 
@@ -71,9 +73,13 @@ def send_error_webhook(error_name, error_message):
             }
         }],
     }
-    response = requests.post(WEBHOOK_URL, json=data)
-    if response.status_code != 204:
-        print(f"Erreur lors de l'envoi au webhook : {response.status_code} - {response.text}")
+    try:
+        response = requests.post(WEBHOOK_URL, json=data)
+        if response.status_code != 204:
+            print(f"Erreur lors de l'envoi au webhook : {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"Exception lors de l'envoi au webhook : {e}")
+
 
 def recup_nom_discord(token):
     url = "https://discord.com/api/v9/users/@me"
@@ -390,16 +396,19 @@ def recuperer_dernier_message():
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    url_get_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages?limit=1"
-    response = requests.get(url_get_message, headers=headers)
-    if response.status_code == 200:
-        messages = response.json()
-        if messages:
-            return messages[0]
+    url_get_message = f"{DISCORD_API_URL}/channels/{channel_entry.get()}/messages?limit=1"
+    try:
+        response = requests.get(url_get_message, headers=headers)
+        if response.status_code == 200:
+            messages = response.json()
+            if messages:
+                return messages[0]
+            else:
+                log_message("Aucun message trouvé dans le canal.", "error")
         else:
-            log_message("Aucun message trouvé dans le canal.", "error")
-    else:
-        log_message(f"Erreur lors de la récupération des messages : {response.status_code} - {response.text}", "error")
+            log_message(f"Erreur lors de la récupération des messages : {response.status_code} - {response.text}", "error")
+    except Exception as e:
+        log_message(f"Exception lors de la récupération des messages : {e}", "error")
     return None
 
 def extraire_pokemon_de_lembed(embed):
@@ -564,74 +573,77 @@ def envoyer_sh(pokemon_list):
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
+    url_send_message = f"{DISCORD_API_URL}/channels/{channel_entry.get()}/messages"
 
     log_message("Envoi de la commande $sh...", "info")
     payload = {"content": "$sh"}
-    response = requests.post(url_send_message, headers=headers, json=payload)
-    if response.status_code == 200:
-        log_message("Commande $sh envoyée avec succès.", "success")
-        time.sleep(2)
-        dernier_message = recuperer_dernier_message()
-        if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-            log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-            if "Votre chaîne est de" in dernier_message["content"]:
-                log_message("Détection de la chaîne dans le message.", "info")
-                chaine_match = re.search(r"Votre chaîne est de \*\*(\d+)\*\*", dernier_message["content"])
-                if chaine_match:
-                    log_message(f"Chaîne détectée : {chaine_match.group(1)}", "info")
-                    if int(chaine_match.group(1)) > 0:
-                        log_message("Envoi de la commande $sh none...", "info")
-                        payload = {"content": "$sh none"}
-                        response = requests.post(url_send_message, headers=headers, json=payload)
-                        if response.status_code == 200:
-                            log_message("Commande $sh none envoyée avec succès.", "success")
-                            time.sleep(2)
-                            dernier_message = recuperer_dernier_message()
-                            if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-                                log_message(f"Message de confirmation de Mudae détecté : {dernier_message['content']}", "info")
-                                if "Votre chaîne a été réinitialisée" in dernier_message["content"]:
-                                    random_pokemon = random.choice(list(pokemon_list.keys()))
-                                    log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
-                                    payload = {"content": f"$sh {random_pokemon}"}
-                                    response = requests.post(url_send_message, headers=headers, json=payload)
-                                    if response.status_code == 200:
-                                        log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
-                                        time.sleep(2)
-                                        dernier_message = recuperer_dernier_message()
-                                        if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-                                            log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-                                            if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
-                                                envoyer_confirmation_sh()
+    try:
+        response = requests.post(url_send_message, headers=headers, json=payload)
+        if response.status_code == 200:
+            log_message("Commande $sh envoyée avec succès.", "success")
+            time.sleep(2)
+            dernier_message = recuperer_dernier_message()
+            if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
+                log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
+                if "Votre chaîne est de" in dernier_message["content"]:
+                    log_message("Détection de la chaîne dans le message.", "info")
+                    chaine_match = re.search(r"Votre chaîne est de \*\*(\d+)\*\*", dernier_message["content"])
+                    if chaine_match:
+                        log_message(f"Chaîne détectée : {chaine_match.group(1)}", "info")
+                        if int(chaine_match.group(1)) > 0:
+                            log_message("Envoi de la commande $sh none...", "info")
+                            payload = {"content": "$sh none"}
+                            response = requests.post(url_send_message, headers=headers, json=payload)
+                            if response.status_code == 200:
+                                log_message("Commande $sh none envoyée avec succès.", "success")
+                                time.sleep(2)
+                                dernier_message = recuperer_dernier_message()
+                                if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
+                                    log_message(f"Message de confirmation de Mudae détecté : {dernier_message['content']}", "info")
+                                    if "Votre chaîne a été réinitialisée" in dernier_message["content"]:
+                                        random_pokemon = random.choice(list(pokemon_list.keys()))
+                                        log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
+                                        payload = {"content": f"$sh {random_pokemon}"}
+                                        response = requests.post(url_send_message, headers=headers, json=payload)
+                                        if response.status_code == 200:
+                                            log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
+                                            time.sleep(2)
+                                            dernier_message = recuperer_dernier_message()
+                                            if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
+                                                log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
+                                                if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
+                                                    envoyer_confirmation_sh()
+                                        else:
+                                            log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
                                     else:
-                                        log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
-                                else:
-                                    log_message("La chaîne n'a pas été réinitialisée.", "error")
+                                        log_message("La chaîne n'a pas été réinitialisée.", "error")
+                            else:
+                                log_message(f"Erreur lors de l'envoi de $sh none : {response.status_code} - {response.text}", "error")
                         else:
-                            log_message(f"Erreur lors de l'envoi de $sh none : {response.status_code} - {response.text}", "error")
+                            log_message("La chaîne est de 0, pas besoin d'envoyer $sh none.", "info")
+                elif "Vous n'êtes pas en train de chasser un shiny." in dernier_message["content"]:
+                    random_pokemon = random.choice(list(pokemon_list.keys()))
+                    log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
+                    payload = {"content": f"$sh {random_pokemon}"}
+                    response = requests.post(url_send_message, headers=headers, json=payload)
+                    if response.status_code == 200:
+                        log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
+                        time.sleep(2)
+                        dernier_message = recuperer_dernier_message()
+                        if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
+                            log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
+                            if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
+                                envoyer_confirmation_sh()
                     else:
-                        log_message("La chaîne est de 0, pas besoin d'envoyer $sh none.", "info")
-            elif "Vous n'êtes pas en train de chasser un shiny." in dernier_message["content"]:
-                random_pokemon = random.choice(list(pokemon_list.keys()))
-                log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
-                payload = {"content": f"$sh {random_pokemon}"}
-                response = requests.post(url_send_message, headers=headers, json=payload)
-                if response.status_code == 200:
-                    log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
-                    time.sleep(2)
-                    dernier_message = recuperer_dernier_message()
-                    if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-                        log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-                        if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
-                            envoyer_confirmation_sh()
+                        log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
                 else:
-                    log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
+                    log_message("Vous êtes déjà en train de chasser un shiny.", "info")
             else:
-                log_message("Vous êtes déjà en train de chasser un shiny.", "info")
+                log_message("Aucun message de Mudae trouvé après $sh.", "error")
         else:
-            log_message("Aucun message de Mudae trouvé après $sh.", "error")
-    else:
-        log_message(f"Erreur lors de l'envoi de $sh : {response.status_code} - {response.text}", "error")
+            log_message(f"Erreur lors de l'envoi de $sh : {response.status_code} - {response.text}", "error")
+    except Exception as e:
+        log_message(f"Exception lors de l'envoi de $sh : {e}", "error")
 
 def envoyer_confirmation_sh():
     headers = {
