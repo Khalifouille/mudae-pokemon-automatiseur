@@ -310,8 +310,7 @@ def toggle_bot():
         running = True
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
-        username, user_id, avatar_url, email = recup_nom_discord(token)
-        send_webhook(username, user_id, avatar_url, email)
+        afficher_message_bienvenue()
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
@@ -776,12 +775,12 @@ def recup_infos_serveur(token, guild_id):
         guild_data = response.json()
         guild_name = guild_data['name']
         guild_id = guild_data['id']
-        member_count = guild_data['member_count']
+        member_count = guild_data.get('member_count', 'Non disponible')
         return guild_name, guild_id, member_count
     else:
         log_message(f"Erreur lors de la récupération des informations du serveur ({response.status_code})", "error")
         return None, None, None
-
+    
 def afficher_message_bienvenue():
     token = token_entry.get()
     if not token:
@@ -792,28 +791,10 @@ def afficher_message_bienvenue():
     guild_name, guild_id, member_count = recup_infos_serveur(token, GUILD_ID)
 
     if username and guild_name:
-        message_bienvenue = f"Salut {username} ! Tu es actuellement sur {guild_name}."
+        message_bienvenue = f"Salut {username} ! Tu farme sur {guild_name}."
         bienvenue_label.config(text=message_bienvenue)
     else:
         bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
-
-def toggle_bot():
-    global running
-    if running:
-        running = False
-        log_message("Bot arrêté.", "info")
-        start_button.config(text="Démarrer", bootstyle="success")
-    else:
-        token = token_entry.get()
-        if not token or not channel_entry.get():
-            messagebox.showerror("Erreur", "Veuillez entrer un token et un Channel ID valide.")
-            return
-
-        running = True
-        log_message("Bot démarré.", "info")
-        start_button.config(text="Arrêter", bootstyle="danger")
-        afficher_message_bienvenue()
-        threading.Thread(target=envoyer_message, daemon=True).start()
 
 style = Style(theme="darkly")
 root = style.master
