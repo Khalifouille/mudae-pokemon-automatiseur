@@ -743,6 +743,45 @@ def hide_tooltip(event):
         event.widget.tooltip.destroy()
         del event.widget.tooltip
 
+def recup_infos_utilisateur(token):
+    url = "https://discord.com/api/v9/users/@me"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        user_data = response.json()
+        username = f"{user_data['username']}#{user_data['discriminator']}"
+        user_id = user_data['id']
+        avatar_url = f"https://cdn.discordapp.com/avatars/{user_id}/{user_data['avatar']}.png" if user_data['avatar'] else "Pas d'avatar"
+        email = user_data.get("email", "Email non disponible")
+        return username, user_id, avatar_url, email
+    else:
+        log_message(f"Erreur lors de la récupération des informations utilisateur ({response.status_code})", "error")
+        return None, None, None, None
+
+def recup_infos_serveur(token, guild_id):
+    url = f"https://discord.com/api/v9/guilds/{guild_id}"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        guild_data = response.json()
+        guild_name = guild_data['name']
+        guild_id = guild_data['id']
+        member_count = guild_data['member_count']
+        return guild_name, guild_id, member_count
+    else:
+        log_message(f"Erreur lors de la récupération des informations du serveur ({response.status_code})", "error")
+        return None, None, None
+
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
