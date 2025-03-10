@@ -214,6 +214,7 @@ def envoyer_message():
         log_message("Message envoyé avec succès !", "success")
         time.sleep(2)
         analyser_reponse(headers, url_get_message)
+        afficher_message_bienvenue()
     else:
         log_message(f"{response_send.status_code}\n{response_send.text}", "error")
 
@@ -815,6 +816,8 @@ def afficher_message_bienvenue():
 
     if username and guild_name:
         message_bienvenue = f"Salut {username} ! Tu farme sur {guild_name}."
+        if pokemon_count is not None:
+            message_bienvenue += f" Nombre de Pokémon : {pokemon_count}"
         bienvenue_label.config(text=message_bienvenue)
     else:
         bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
@@ -884,7 +887,7 @@ test_mode_checkbox.pack(pady=5)
 simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
 simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
 
-bienvenue_label = ttk.Label(main_frame, text="", font=("Segoe UI", 12))
+bienvenue_label = ttk.Label(main_frame, text="Salut !", font=("Segoe UI", 12))
 bienvenue_label.pack(pady=5)
 
 nombre_pokemon_label = ttk.Label(main_frame, text="Nombre de Pokémon : Non disponible", font=("Segoe UI", 12))
