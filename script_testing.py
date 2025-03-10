@@ -786,15 +786,15 @@ pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 start2_button = ttk.Button(button_frame, text="Collecte complète (TEST)", command=executer_collecte_complete, bootstyle="warning", state="disabled")
 start2_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
-simulate_error_button.pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
-
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 test_mode_var = tk.BooleanVar()
 test_mode_checkbox = ttk.Checkbutton(main_frame, text="Mode Test", variable=test_mode_var, command=toggle_test_mode, bootstyle="round-toggle")
 test_mode_checkbox.pack(pady=5)
+
+simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
+simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
 
 countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
 countdown_label.pack(pady=5)
