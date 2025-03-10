@@ -30,6 +30,7 @@ MUDAE_BOT_ID = "432610292342587392"
 
 CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
+pokemon_count = None
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
 CURRENT_VERSION = "1.0.4"
@@ -516,8 +517,19 @@ def extraire_nombre_en_stock(contenu):
 with open("data/pokemon_rarity.json", "r") as file:
     POKEMON_RARITY = json.load(file)
 
+def sauvegarder_pokemon_count(count):
+    with open("pokemon_count.json", "w") as file:
+        json.dump({"pokemon_count": count}, file)
+
+def charger_pokemon_count():
+    global pokemon_count
+    if os.path.exists("pokemon_count.json"):
+        with open("pokemon_count.json", "r") as file:
+            data = json.load(file)
+            pokemon_count = data.get("pokemon_count", None)
+
 def executer_pd_arl():
-    global pd_arl_running
+    global pd_arl_running, pokemon_count
     if pd_arl_running:
         return
 
@@ -537,6 +549,10 @@ def executer_pd_arl():
             for pokemon, count in tous_les_pokemon:
                 rarity = POKEMON_RARITY.get(pokemon, "Unknown")
                 log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
+
+            pokemon_count = sum(count for _, count in tous_les_pokemon)
+            sauvegarder_pokemon_count(pokemon_count)
+            afficher_nombre_pokemon()
 
         if doublons:
             log_message("Pokémon en double :", "info")
