@@ -816,11 +816,10 @@ def afficher_message_bienvenue():
 
     if username and guild_name:
         message_bienvenue = f"Salut {username} ! Tu farme sur {guild_name}."
-        if pokemon_count is not None:
-            message_bienvenue += f" Pokémon en stock: {pokemon_count}"
         bienvenue_label.config(text=message_bienvenue)
     else:
         bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
+
 
 style = Style(theme="darkly")
 root = style.master
@@ -921,6 +920,7 @@ charger_config()
 check_for_updates()
 charger_pokemon_count()
 afficher_nombre_pokemon()
+afficher_message_bienvenue()
 
 threading.Thread(target=tray_icon.run, daemon=True).start()
 
