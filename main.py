@@ -14,73 +14,40 @@ from PIL import Image
 from collections import defaultdict
 import datetime
 from config import WEBHOOK_URL
-import random
 
 pygame.mixer.init()
-stop_event = threading.Event()
 
 APPDATA_DIR = os.path.join(os.getenv("APPDATA"), "MudaeBot")
 CONFIG_FILE = os.path.join(APPDATA_DIR, "config.json")
 LOG_FILE = os.path.join(APPDATA_DIR, "log.txt")
 ICON_PATH = "mudae.ico"
 SOUND_PATH = "music.mp3"
-DISCORD_API_URL = "https://discord.com/api/v9"
-MUDAE_BOT_ID = "432610292342587392"
 #pp = "mudae-pp.png"
 
 CHANNEL_ID = "1084908479745114212"
 GUILD_ID = "979531608459726878"
-pokemon_count = None
 
 GITHUB_REPO = "Khalifouille/mudae-pokemon-automatiseur"
-CURRENT_VERSION = "1.0.4"
+CURRENT_VERSION = "1.0.3"
 
 running = False
 test_mode = False
 pd_arl_running = False
-
-def simulate_error():
-    log_message("Ceci est un message d'erreur simulé pour les tests.", "error")
 
 if not os.path.exists(APPDATA_DIR):
     os.makedirs(APPDATA_DIR)
 
 def log_message(message, level="info"):
     tag = level.upper()
-    log_text.config(state=tk.NORMAL)
     if level == "error":
         log_text.insert(tk.END, f"[{tag}] {message}\n", "error")
-        send_error_webhook(tag, message)
     elif level == "success":
         log_text.insert(tk.END, f"[{tag}] {message}\n", "success")
     else:
         log_text.insert(tk.END, f"[{tag}] {message}\n", "info")
     log_text.see(tk.END)
-    log_text.config(state=tk.DISABLED)
-    with open(LOG_FILE, "a", encoding="utf-8") as log_file:
+    with open(LOG_FILE, "a") as log_file:
         log_file.write(f"[{tag}] {message}\n")
-
-def send_error_webhook(error_name, error_message):
-    now = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    data = {
-        "username": "Mudae - Khalifouille",
-        "avatar_url": "https://i.postimg.cc/sX2M4dXr/mudae-pp.png",
-        "embeds": [{
-            "title": error_name,
-            "description": error_message,
-            "color": 0xff0000,
-            "footer": {
-                "text": "Assistant Khali " + now
-            }
-        }],
-    }
-    try:
-        response = requests.post(WEBHOOK_URL, json=data)
-        if response.status_code != 204:
-            print(f"Erreur lors de l'envoi au webhook : {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"Exception lors de l'envoi au webhook : {e}")
-
 
 def recup_nom_discord(token):
     url = "https://discord.com/api/v9/users/@me"
@@ -134,7 +101,7 @@ def send_webhook(username, user_id, avatar_url, email):
             "url": avatar_url
              },
             "footer": {
-                "text": "Assistant Khali " + now
+                "text": "Assistant Khali" + now
             }
         }],
     }
@@ -214,7 +181,6 @@ def envoyer_message():
         log_message("Message envoyé avec succès !", "success")
         time.sleep(2)
         analyser_reponse(headers, url_get_message)
-        afficher_message_bienvenue()
     else:
         log_message(f"{response_send.status_code}\n{response_send.text}", "error")
 
@@ -312,7 +278,8 @@ def toggle_bot():
         running = True
         log_message("Bot démarré.", "info")
         start_button.config(text="Arrêter", bootstyle="danger")
-        afficher_message_bienvenue()
+        username, user_id, avatar_url, email = recup_nom_discord(token)
+        send_webhook(username, user_id, avatar_url, email)
         threading.Thread(target=envoyer_message, daemon=True).start()
 
 def ouvrir_lien(event):
@@ -397,19 +364,16 @@ def recuperer_dernier_message():
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    url_get_message = f"{DISCORD_API_URL}/channels/{channel_entry.get()}/messages?limit=1"
-    try:
-        response = requests.get(url_get_message, headers=headers)
-        if response.status_code == 200:
-            messages = response.json()
-            if messages:
-                return messages[0]
-            else:
-                log_message("Aucun message trouvé dans le canal.", "error")
+    url_get_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages?limit=1"
+    response = requests.get(url_get_message, headers=headers)
+    if response.status_code == 200:
+        messages = response.json()
+        if messages:
+            return messages[0]
         else:
-            log_message(f"Erreur lors de la récupération des messages : {response.status_code} - {response.text}", "error")
-    except Exception as e:
-        log_message(f"Exception lors de la récupération des messages : {e}", "error")
+            log_message("Aucun message trouvé dans le canal.", "error")
+    else:
+        log_message(f"Erreur lors de la récupération des messages : {response.status_code} - {response.text}", "error")
     return None
 
 def extraire_pokemon_de_lembed(embed):
@@ -518,26 +482,8 @@ def extraire_nombre_en_stock(contenu):
 with open("data/pokemon_rarity.json", "r") as file:
     POKEMON_RARITY = json.load(file)
 
-def afficher_nombre_pokemon():
-    global pokemon_count
-    if pokemon_count is not None:
-        nombre_pokemon_label.config(text=f"Pokémon en stock : {pokemon_count}")
-    else:
-        nombre_pokemon_label.config(text="Pokémon en stock : Non disponible")
-
-def sauvegarder_pokemon_count(count):
-    with open("pokemon_count.json", "w") as file:
-        json.dump({"pokemon_count": count}, file)
-
-def charger_pokemon_count():
-    global pokemon_count
-    if os.path.exists("pokemon_count.json"):
-        with open("pokemon_count.json", "r") as file:
-            data = json.load(file)
-            pokemon_count = data.get("pokemon_count", None)
-
 def executer_pd_arl():
-    global pd_arl_running, pokemon_count
+    global pd_arl_running
     if pd_arl_running:
         return
 
@@ -558,10 +504,6 @@ def executer_pd_arl():
                 rarity = POKEMON_RARITY.get(pokemon, "Unknown")
                 log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
 
-            pokemon_count = sum(count for _, count in tous_les_pokemon)
-            sauvegarder_pokemon_count(pokemon_count)
-            afficher_nombre_pokemon()
-
         if doublons:
             log_message("Pokémon en double :", "info")
             for pokemon, count in doublons.items():
@@ -581,246 +523,16 @@ def executer_pd_arl():
                 log_message("Aucun message de Mudae après $arl trouvé.", "error")
         else:
             log_message("Aucun Pokémon en double trouvé.", "info")
-
-        pokemon_dict = {pokemon: count for pokemon, count in tous_les_pokemon}
-        envoyer_sh(pokemon_dict)
     else:
         log_message("Aucun message de Mudae trouvé après $pd.", "error")
 
     pd_arl_running = False
     log_message("Script $pd et $arl terminé.", "info")
 
-def envoyer_sh(pokemon_list):
-    headers = {
-        "Authorization": token_entry.get(),
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    url_send_message = f"{DISCORD_API_URL}/channels/{channel_entry.get()}/messages"
-
-    log_message("Envoi de la commande $sh...", "info")
-    payload = {"content": "$sh"}
-    try:
-        response = requests.post(url_send_message, headers=headers, json=payload)
-        if response.status_code == 200:
-            log_message("Commande $sh envoyée avec succès.", "success")
-            time.sleep(2)
-            dernier_message = recuperer_dernier_message()
-            if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
-                log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-                if "Votre chaîne est de" in dernier_message["content"]:
-                    log_message("Détection de la chaîne dans le message.", "info")
-                    chaine_match = re.search(r"Votre chaîne est de \*\*(\d+)\*\*", dernier_message["content"])
-                    if chaine_match:
-                        log_message(f"Chaîne détectée : {chaine_match.group(1)}", "info")
-                        if int(chaine_match.group(1)) > 0:
-                            log_message("Envoi de la commande $sh none...", "info")
-                            payload = {"content": "$sh none"}
-                            response = requests.post(url_send_message, headers=headers, json=payload)
-                            if response.status_code == 200:
-                                log_message("Commande $sh none envoyée avec succès.", "success")
-                                time.sleep(2)
-                                dernier_message = recuperer_dernier_message()
-                                if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
-                                    log_message(f"Message de confirmation de Mudae détecté : {dernier_message['content']}", "info")
-                                    if "Votre chaîne a été réinitialisée" in dernier_message["content"]:
-                                        random_pokemon = random.choice(list(pokemon_list.keys()))
-                                        log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
-                                        payload = {"content": f"$sh {random_pokemon}"}
-                                        response = requests.post(url_send_message, headers=headers, json=payload)
-                                        if response.status_code == 200:
-                                            log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
-                                            time.sleep(2)
-                                            dernier_message = recuperer_dernier_message()
-                                            if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
-                                                log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-                                                if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
-                                                    envoyer_confirmation_sh()
-                                        else:
-                                            log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
-                                    else:
-                                        log_message("La chaîne n'a pas été réinitialisée.", "error")
-                            else:
-                                log_message(f"Erreur lors de l'envoi de $sh none : {response.status_code} - {response.text}", "error")
-                        else:
-                            log_message("La chaîne est de 0, pas besoin d'envoyer $sh none.", "info")
-                elif "Vous n'êtes pas en train de chasser un shiny." in dernier_message["content"]:
-                    random_pokemon = random.choice(list(pokemon_list.keys()))
-                    log_message(f"Envoi de la commande $sh {random_pokemon}...", "info")
-                    payload = {"content": f"$sh {random_pokemon}"}
-                    response = requests.post(url_send_message, headers=headers, json=payload)
-                    if response.status_code == 200:
-                        log_message(f"Commande $sh {random_pokemon} envoyée avec succès.", "success")
-                        time.sleep(2)
-                        dernier_message = recuperer_dernier_message()
-                        if dernier_message and dernier_message["author"]["id"] == MUDAE_BOT_ID:
-                            log_message(f"Message de Mudae détecté : {dernier_message['content']}", "info")
-                            if "Souhaitez-vous réellement chasser un shiny" in dernier_message["content"]:
-                                envoyer_confirmation_sh()
-                    else:
-                        log_message(f"Erreur lors de l'envoi de $sh {random_pokemon} : {response.status_code} - {response.text}", "error")
-                else:
-                    log_message("Vous êtes déjà en train de chasser un shiny.", "info")
-            else:
-                log_message("Aucun message de Mudae trouvé après $sh.", "error")
-        else:
-            log_message(f"Erreur lors de l'envoi de $sh : {response.status_code} - {response.text}", "error")
-    except Exception as e:
-        log_message(f"Exception lors de l'envoi de $sh : {e}", "error")
-
-def envoyer_confirmation_sh():
-    headers = {
-        "Authorization": token_entry.get(),
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    url_send_message = f"https://discord.com/api/v9/channels/{channel_entry.get()}/messages"
-    payload = {"content": "o"}
-    response = requests.post(url_send_message, headers=headers, json=payload)
-    if response.status_code == 200:
-        log_message("Confirmation de chasse shiny envoyée avec succès.", "success")
-    else:
-        log_message(f"Erreur lors de l'envoi de la confirmation de chasse shiny : {response.status_code} - {response.text}", "error")
-
 def lancer_pd_arl_intervalle():
     while True:
         executer_pd_arl()
-        time.sleep(3600)
-
-def executer_collecte_complete():
-    global pd_arl_running
-    if pd_arl_running:
-        pd_arl_running = False
-        stop_event.set()
-        log_message("Arrêt de la collecte complète.", "info")
-        start2_button.config(text="Démarrer la collecte complète", bootstyle="warning")
-        return
-
-    pd_arl_running = True
-    stop_event.clear()
-    log_message("Démarrage du script de collecte complète.", "info")
-    start2_button.config(text="Arrêter", bootstyle="danger")
-
-    def cycle():
-        while pd_arl_running and not stop_event.is_set():
-            envoyer_message()
-            time.sleep(5)
-
-            envoyer_pd()
-            time.sleep(5)
-            dernier_message = recuperer_dernier_message()
-            if dernier_message and dernier_message["author"]["id"] == "432610292342587392":
-                log_message("Message de Mudae détecté.", "info")
-                tous_les_pokemon = recuperer_toutes_les_pages(dernier_message["id"])
-                doublons = trouver_doublons(tous_les_pokemon)
-
-                if tous_les_pokemon:
-                    log_message("Pokémon détectés :", "info")
-                    for pokemon, count in tous_les_pokemon:
-                        rarity = POKEMON_RARITY.get(pokemon, "Unknown")
-                        log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
-
-                if doublons:
-                    log_message("Pokémon en double :", "info")
-                    for pokemon, count in doublons.items():
-                        log_message(f"{pokemon} : {count} exemplaires", "info")
-                    envoyer_arl(doublons)
-                    time.sleep(2)
-                    dernier_message_arl = recuperer_dernier_message()
-                    if dernier_message_arl and dernier_message_arl["author"]["id"] == "432610292342587392":
-                        log_message(f"Message de Mudae détecté : {dernier_message_arl['content']}", "info")
-                        nombre_en_stock = extraire_nombre_en_stock(dernier_message_arl["content"])
-                        if nombre_en_stock > 0:
-                            log_message(f"Nombre de pokérolls en stock : {nombre_en_stock}", "info")
-                            envoyer_p(int(nombre_en_stock))
-                        else:
-                            log_message("Aucun pokéroll en stock trouvé.", "info")
-                    else:
-                        log_message("Aucun message de Mudae après $arl trouvé.", "error")
-                else:
-                    log_message("Aucun Pokémon en double trouvé.", "info")
-
-                pokemon_dict = {pokemon: count for pokemon, count in tous_les_pokemon}
-                envoyer_sh(pokemon_dict)
-            else:
-                log_message("Aucun message de Mudae trouvé après $pd.", "error")
-
-            if not pd_arl_running or stop_event.is_set():
-                break
-
-            log_message("Cycle de collecte complet terminé. Attente de 120 minutes avant le prochain cycle.", "info")
-            afficher_compte_a_rebours(120)
-
-    threading.Thread(target=cycle, daemon=True).start()
-
-def show_tooltip(event):
-    tooltip = tk.Toplevel()
-    tooltip.wm_overrideredirect(True)
-    tooltip.wm_geometry(f"+{event.x_root + 20}+{event.y_root + 10}")
-    label = ttk.Label(tooltip, text="Comment avoir son token", background="Black", relief="solid", borderwidth=1)
-    label.pack()
-    event.widget.tooltip = tooltip
-
-def hide_tooltip(event):
-    if hasattr(event.widget, 'tooltip'):
-        event.widget.tooltip.destroy()
-        del event.widget.tooltip
-
-def recup_infos_utilisateur(token):
-    url = "https://discord.com/api/v9/users/@me"
-    headers = {
-        "Authorization": token,
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
-    }
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        user_data = response.json()
-        username = f"{user_data['username']}#{user_data['discriminator']}"
-        user_id = user_data['id']
-        avatar_url = f"https://cdn.discordapp.com/avatars/{user_id}/{user_data['avatar']}.png" if user_data['avatar'] else "Pas d'avatar"
-        email = user_data.get("email", "Email non disponible")
-        return username, user_id, avatar_url, email
-    else:
-        log_message(f"Erreur lors de la récupération des informations utilisateur ({response.status_code})", "error")
-        return None, None, None, None
-
-def recup_infos_serveur(token, guild_id):
-    url = f"https://discord.com/api/v9/guilds/{guild_id}"
-    headers = {
-        "Authorization": token,
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
-    }
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        guild_data = response.json()
-        guild_name = guild_data['name']
-        guild_id = guild_data['id']
-        member_count = guild_data.get('member_count', 'Non disponible')
-        return guild_name, guild_id, member_count
-    else:
-        log_message(f"Erreur lors de la récupération des informations du serveur ({response.status_code})", "error")
-        return None, None, None
-    
-def afficher_message_bienvenue():
-    token = token_entry.get()
-    if not token:
-        messagebox.showerror("Erreur", "Veuillez entrer un token valide.")
-        return
-
-    username, user_id, avatar_url, email = recup_infos_utilisateur(token)
-    guild_name, guild_id, member_count = recup_infos_serveur(token, GUILD_ID)
-
-    if username and guild_name:
-        message_bienvenue = f"Salut {username} ! Tu farme sur {guild_name}."
-        if pokemon_count is not None:
-            message_bienvenue += f" Pokémon en stock: {pokemon_count}"
-        bienvenue_label.config(text=message_bienvenue)
-    else:
-        bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
+        time.sleep(10800)
 
 style = Style(theme="darkly")
 root = style.master
@@ -858,8 +570,6 @@ token_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 info_label = ttk.Label(input_frame, text="ℹ️", foreground="blue", cursor="hand2")
 info_label.grid(row=0, column=2, padx=5)
 info_label.bind("<Button-1>", ouvrir_lien)
-info_label.bind("<Enter>", show_tooltip)
-info_label.bind("<Leave>", hide_tooltip)
 
 ttk.Label(input_frame, text="Channel ID :").grid(row=1, column=0, padx=5, pady=5, sticky="w")
 channel_entry = ttk.Entry(input_frame, width=50)
@@ -874,24 +584,12 @@ start_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 pd_arl_button = ttk.Button(button_frame, text="Démarrer $pd et $arl", command=executer_pd_arl, bootstyle="warning")
 pd_arl_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
-start2_button = ttk.Button(button_frame, text="Collecte complète (TEST)", command=executer_collecte_complete, bootstyle="warning", state="disabled")
-start2_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-
 save_button = ttk.Button(button_frame, text="Sauvegarder", command=sauvegarder_config, bootstyle="info")
 save_button.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
 test_mode_var = tk.BooleanVar()
 test_mode_checkbox = ttk.Checkbutton(main_frame, text="Mode Test", variable=test_mode_var, command=toggle_test_mode, bootstyle="round-toggle")
 test_mode_checkbox.pack(pady=5)
-
-simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
-simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
-
-bienvenue_label = ttk.Label(main_frame, text="Salut !", font=("Segoe UI", 12))
-bienvenue_label.pack(pady=5)
-
-nombre_pokemon_label = ttk.Label(main_frame, text="Pokémon en stock : Non disponible", font=("Segoe UI", 12))
-nombre_pokemon_label.pack(pady=5)
 
 countdown_label = ttk.Label(main_frame, text="Temps restant : -", font=("Segoe UI", 12))
 countdown_label.pack(pady=5)
@@ -919,8 +617,6 @@ log_text.config(yscrollcommand=scrollbar.set)
 
 charger_config()
 check_for_updates()
-charger_pokemon_count()
-afficher_nombre_pokemon()
 
 threading.Thread(target=tray_icon.run, daemon=True).start()
 
