@@ -815,11 +815,16 @@ def afficher_message_bienvenue():
     guild_name, guild_id, member_count = recup_infos_serveur(token, GUILD_ID)
 
     if username and guild_name:
-        message_bienvenue = f"Salut {username} ! Tu farme sur {guild_name}."
-        bienvenue_label.config(text=message_bienvenue)
+        bienvenue_label.config(text="")
+        bienvenue_label.tag_configure("username", foreground="blue")
+        bienvenue_label.tag_configure("guild_name", foreground="green")
+        bienvenue_label.insert(tk.END, "Salut ", "default")
+        bienvenue_label.insert(tk.END, username, "username")
+        bienvenue_label.insert(tk.END, " ! Tu farme sur ", "default")
+        bienvenue_label.insert(tk.END, guild_name, "guild_name")
+        bienvenue_label.insert(tk.END, ".", "default")
     else:
         bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
-
 
 style = Style(theme="darkly")
 root = style.master
