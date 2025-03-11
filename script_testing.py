@@ -520,25 +520,26 @@ with open("data/pokemon_rarity.json", "r") as file:
     POKEMON_RARITY = json.load(file)
 
 def afficher_nombre_pokemon():
-    global pokemon_count
+    global pokemon_count, shiny_count
     if pokemon_count is not None:
-        nombre_pokemon_label.config(text=f"Pokémon en stock : {pokemon_count}")
+        nombre_pokemon_label.config(text=f"Pokémon en stock : {pokemon_count} (dont {shiny_count} shiny)")
     else:
         nombre_pokemon_label.config(text="Pokémon en stock : Non disponible")
 
-def sauvegarder_pokemon_count(count):
+def sauvegarder_pokemon_count(count, shiny_count):
     with open("pokemon_count.json", "w") as file:
-        json.dump({"pokemon_count": count}, file)
+        json.dump({"pokemon_count": count, "shiny_count": shiny_count}, file)
 
 def charger_pokemon_count():
-    global pokemon_count
+    global pokemon_count, shiny_count
     if os.path.exists("pokemon_count.json"):
         with open("pokemon_count.json", "r") as file:
             data = json.load(file)
             pokemon_count = data.get("pokemon_count", None)
+            shiny_count = data.get("shiny_count", 0)
 
 def executer_pd_arl():
-    global pd_arl_running, pokemon_count
+    global pd_arl_running, pokemon_count, shiny_count
     if pd_arl_running:
         return
 
@@ -555,13 +556,14 @@ def executer_pd_arl():
 
         if tous_les_pokemon:
             log_message("Pokémon détectés :", "info")
+            shiny_count = sum(count for _, count, is_shiny in tous_les_pokemon if is_shiny)
             for pokemon, count, is_shiny in tous_les_pokemon:
                 rarity = POKEMON_RARITY.get(pokemon, "Unknown")
                 shiny_status = "Shiny" if is_shiny else "Normal"
                 log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}, Statut : {shiny_status}", "info")
 
             pokemon_count = sum(count for _, count, _ in tous_les_pokemon)
-            sauvegarder_pokemon_count(pokemon_count)
+            sauvegarder_pokemon_count(pokemon_count, shiny_count)
             afficher_nombre_pokemon()
 
         if doublons:
