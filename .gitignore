@@ -6,3 +6,4 @@ main.spec
 config.py
 /build
 script_testing.spec
+pokemon_count.json
