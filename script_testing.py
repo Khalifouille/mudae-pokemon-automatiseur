@@ -423,8 +423,9 @@ def extraire_pokemon_de_lembed(embed):
                 if match:
                     nom_pokemon = match.group(1).strip()
                     multiplicite = int(match.group(2)) if match.group(2) else 1
-                    pokemon_liste.append((nom_pokemon, multiplicite))
-                    print(f"Nom: {nom_pokemon}, Quantité: {multiplicite}")
+                    is_shiny = "<:shinySparkles:653808283244560402>" in line
+                    pokemon_liste.append((nom_pokemon, multiplicite, is_shiny))
+                    print(f"Nom: {nom_pokemon}, Quantité: {multiplicite}, Shiny: {is_shiny}")
     print(pokemon_liste)
     return pokemon_liste
 
@@ -554,11 +555,12 @@ def executer_pd_arl():
 
         if tous_les_pokemon:
             log_message("Pokémon détectés :", "info")
-            for pokemon, count in tous_les_pokemon:
+            for pokemon, count, is_shiny in tous_les_pokemon:
                 rarity = POKEMON_RARITY.get(pokemon, "Unknown")
-                log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}", "info")
+                shiny_status = "Shiny" if is_shiny else "Normal"
+                log_message(f"{pokemon} : {count} exemplaires, Rareté : {rarity}, Statut : {shiny_status}", "info")
 
-            pokemon_count = sum(count for _, count in tous_les_pokemon)
+            pokemon_count = sum(count for _, count, _ in tous_les_pokemon)
             sauvegarder_pokemon_count(pokemon_count)
             afficher_nombre_pokemon()
 
@@ -582,7 +584,7 @@ def executer_pd_arl():
         else:
             log_message("Aucun Pokémon en double trouvé.", "info")
 
-        pokemon_dict = {pokemon: count for pokemon, count in tous_les_pokemon}
+        pokemon_dict = {pokemon: count for pokemon, count, _ in tous_les_pokemon}
         envoyer_sh(pokemon_dict)
     else:
         log_message("Aucun message de Mudae trouvé après $pd.", "error")
@@ -820,7 +822,6 @@ def afficher_message_bienvenue():
     else:
         bienvenue_label.config(text="Impossible de récupérer les informations utilisateur ou serveur.")
 
-
 style = Style(theme="darkly")
 root = style.master
 root.title("Mudae Pokemon Automatiseur")
@@ -886,7 +887,7 @@ test_mode_checkbox.pack(pady=5)
 simulate_error_button = ttk.Button(button_frame, text="Simuler une erreur", command=simulate_error, bootstyle="danger")
 simulate_error_button.pack(side=tk.LEFT, padx=4, fill=tk.X, expand=True)
 
-bienvenue_label = ttk.Label(main_frame, text="Salut !", font=("Segoe UI", 12))
+bienvenue_label = ttk.Label(main_frame, text="", font=("Segoe UI", 12))
 bienvenue_label.pack(pady=5)
 
 nombre_pokemon_label = ttk.Label(main_frame, text="Pokémon en stock : Non disponible", font=("Segoe UI", 12))
