@@ -499,7 +499,7 @@ def recuperer_toutes_les_pages(message_id):
 
 def trouver_doublons(pokemon_liste):
     compteur_pokemon = defaultdict(int)
-    for pokemon, multiplicite in pokemon_liste:
+    for pokemon, multiplicite, is_shiny in pokemon_liste:
         compteur_pokemon[pokemon] += multiplicite
 
     doublons = {pokemon: count for pokemon, count in compteur_pokemon.items() if count > 1}
