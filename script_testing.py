@@ -521,9 +521,9 @@ with open("data/pokemon_rarity.json", "r") as file:
 def afficher_nombre_pokemon():
     global pokemon_count
     if pokemon_count is not None:
-        nombre_pokemon_label.config(text=f"Nombre de Pokémon : {pokemon_count}")
+        nombre_pokemon_label.config(text=f"Pokémon en stock : {pokemon_count}")
     else:
-        nombre_pokemon_label.config(text="Nombre de Pokémon : Non disponible")
+        nombre_pokemon_label.config(text="Pokémon en stock : Non disponible")
 
 def sauvegarder_pokemon_count(count):
     with open("pokemon_count.json", "w") as file:
